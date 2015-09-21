@@ -103,14 +103,13 @@ else if(fmod(fabs(ph-phitolOVERtwo+phi_slice) + PI,TWOPI)
     z = r * cos(th) + halfheight;
     r_bin = (long)floor(r_cyn / dr);
     z_bin = (long)floor(z / dz);
-    if((fabs(r_bin) < r_num) && (z_bin < z_num) && (r_bin >= 0 )
-&& (z_bin >= 0))
-  histogram[z_bin][r_bin] += 1;
-output = fopen("StrongHistogram.dat", "w");
-for(i = 0 ; i < z_num ; i++){
-for(j = 0 ; j < r_num ; j++)
-    fprintf(output, "%lf\t", histogram[i][j]);
-    fprintf(output, "\n");
+    if((fabs(r_bin) < r_num) && (z_bin < z_num) && (r_bin >= 0 ) && (z_bin >= 0))
+    histogram[z_bin][r_bin] += 1;
+    output = fopen("StrongHistogram.dat", "w");
+    for(i = 0 ; i < z_num ; i++){
+        for(j = 0 ; j < r_num ; j++)
+            fprintf(output, "%lf\t", histogram[i][j]);
+            fprintf(output, "\n");
 }
 fclose(output);
 return 0;

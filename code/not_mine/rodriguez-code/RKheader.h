@@ -5,35 +5,23 @@
 #include <time.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
-#define csc(x)
-#define cot(x)
-#define E
-#define PI
-#define PIover2
-#define SQRT2
-#define SOL
-#define SOLARMASS
-#define GRAV_CONST
-(1/sin((double)(x)))
-(1/tan((double)(x)))
-2.71828182845904523536029
-3.14159265358979323846264
-1.57079632679489661923132
-1.41421356237309504880168
-299792458.
-1476.71618
-7.53462359e-21
+#define csc(x)              (1/sin((double)(x)))
+#define cot(x)              (1/tan((double)(x)))
+#define E                   2.71828182845904523536029
+#define PI                  3.14159265358979323846264
+#define PIover2             1.57079632679489661923132
+#define SQRT2               1.41421356237309504880168
+#define SOL                 299792458.
+#define SOLARMASS           1476.71618
+#define GRAV_CONST          7.53462359e-21
+
 /*The sigma values for 2 sigma*/
-#define ENERGY_SIGMA
-#define JZ_SIGMA
-#define CARTER_SIGMA
-#define THETA_SIGMA
-#define R_SIGMA
-1.41421337/*0.207107*/
-1690.01
-13313.1
-0.0957049
-4.9445e6
+#define ENERGY_SIGMA        1.41421337/*0.207107*/
+#define JZ_SIGMA            1690.01
+#define CARTER_SIGMA        13313.1
+#define THETA_SIGMA         0.0957049
+#define R_SIGMA             4.9445e6
+
 
 /*The Cash-Karp Parameters for Embedded Runga-Kutta*/
 #define A_2 0.2

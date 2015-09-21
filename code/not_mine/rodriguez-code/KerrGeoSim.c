@@ -13,19 +13,17 @@ int convert
   double *f
 ){
  double test;
-  f[1] = -energy - (2*M*f[2]*(a*(a*energy + jz) + energy*pow(f[2],2)))/((pow(a,2)
-         *pow(cos(f[4]),2) + pow(f[2],2))*(pow(a,2) - 2*M*f[2] + pow(f[2],2)));
-  f[5] = sqrt(2*a*energy*jz + carter - pow(jz,2)*pow((1/sin(f[4])),2) + pow(a,2)
-         *(pow(cos(f[4]),2) - pow(energy,2)*pow(sin(f[4]),2)))/ pow(pow(f[2],2) +
-         pow(a,2)*pow(cos(f[4]),2),2);
-  test = 2*a*energy*jz + carter - pow(jz,2)*pow((1/sin(f[4])),2) + pow(a,2)*(pow(
-         cos(f[4]),2) - pow(energy,2)*pow(sin(f[4]),2));
+  f[1] = -energy - (2*M*f[2]*(a*(a*energy + jz) + energy*pow(f[2],2)))/((pow(a,2)*pow(cos(f[4]),2) + pow(f[2],2))*(pow(a,2) - 2*M*f[2] + pow(f[2],2)));
+  
+  f[5] = sqrt(2*a*energy*jz + carter - pow(jz,2)*pow((1/sin(f[4])),2) + pow(a,2)*(pow(cos(f[4]),2) - pow(energy,2)*pow(sin(f[4]),2)))/ pow(pow(f[2],2) + pow(a,2)*pow(cos(f[4]),2),2);
+  
+  test = 2*a*energy*jz + carter - pow(jz,2)*pow((1/sin(f[4])),2) + pow(a,2)*(pow(cos(f[4]),2) - pow(energy,2)*pow(sin(f[4]),2));
+  
   if(test <= 0.)f[5] = 0.;
     /*shody piece of chicanery; it handles floating point errors that somtimes
       conspire to give an imaginary theta_dot for planar orbits*/
-  f[7] = (pow(a,2)*jz*pow((1/tan(f[4])),2) + f[2]*(-2*a*energy*M + jz*pow((1/sin(
-         f[4])),2)*(-2*M + f[2])))/((pow(a,2)*pow(cos(f[4]),2) + pow(f[2],2))*(
-         pow(a,2) - 2*M*f[2] + pow(f[2],2)));
+  f[7] = (pow(a,2)*jz*pow((1/tan(f[4])),2) + f[2]*(-2*a*energy*M + jz*pow((1/sin(f[4])),2)*(-2*M + f[2])))/((pow(a,2)*pow(cos(f[4]),2) + pow(f[2],2))*(pow(a,2) - 2*M*f[2] + pow(f[2],2)));
+  
   return 0;
 }
 /*The first order vector form of the Kerr Lagrangian (divided by tdot to parameterize in

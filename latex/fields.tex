@@ -1,0 +1,79 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{csquotes}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+
+\title{Theory of Fields}
+\date{}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+\section*{For the reader}
+While it is not necessary to use math to describe the physical phenomena of this chapter at some level, a complete treatment will require knowledge of at least vector calculus.  In endeavoring to not alienate any readers, I have structured this chapter like so:  All \textbf{odd-numbered} sections contain only qualitative explanations.  These constitute my best efforts at crafting accurate descriptions which have no mathematical components.  Those can be found in the \textbf{even-numbered} sections.
+
+It is my goal that the reader who is not interested in the mathematics can read only the odd-numbered sections and arrive at the end of the chapter with an equivalent -- if less rigorous -- notion of the topic at hand as the reader who slogged through the whole thing.
+
+\section{What is a field?}
+Let's make a definition and then work through it with some examples to hone our intuition:
+\begin{center}
+\framebox[1.05\width]{\textbf{A field assigns a quantity to every point in space.}}
+\end{center}
+
+What does this mean?  Let's say you're in the presence of a field and you measure the value of the field at your location with your fieldometer.  It has value 5.  You move somewhere else and take a measurement.  The fieldometer reads 4.  You move to a third location.  It reads 5, again.
+
+That's all that a field is.  No matter where you go, the field has some quantity there.  This is still all rather abstract.  Here are some examples of things which can be described as fields:
+
+\begin{itemize}
+  \item \emph{Temperature}: If you're in a room taking the temperature at various locations, it can be thought of as finding the value of the temperature field.  In this case, your fieldometer is a thermometer, and the values that you read at every location have units of celsius, fahrenheit or kelvin.  Because there is only one value at every location, we call this a \textbf{scalar} field.
+  \item \emph{Wind}: At every point in a windy area, you might measure how fast the wind is going and in what direction.  Thus there are two things we are interested at every location: speed and direction.  Your fieldometer needs to accommodate these two things.  You might measure the speed with one of those spinning gizmos, and you might determine the direction it's pointing with a weather vane.  That we need two measurements at every location makes this an example of a \textbf{vector} field.
+  
+While the weather-vane-plus-spinning-gizmo would be wholly sufficient, we can make it slightly simpler by throwing a styrofoam ball up and observing the direction the wind pushes it and how fast it accelerates in that direction.  In this context, the styrofoam ball is called a \textbf{test particle}.
+  \item \emph{Electricity and magnetism}:  These are perhaps the only examples of fields (with the possible exception of gravity) that most people would associate with the word \emph{field}.  They are both vector fields (they point some where at every location), and they both move objects with the right properties\footnote{Namely, that the object has something called ``charge''.  For the sake of this conversation, merely define charge as that property of an object which enables electricity and magnetism to move it} around:  The vague notion of some ``field lines'' (whatever those are) is a classic thing to demonstrate in elementary school; often by spilling some iron filings around a magnet and noting how they orient themselves.
+  
+Notice that those iron filings are performing the exact same task as the styrofoam ball before:   They are test particles that enable us to answer the question: ``At any given point, what's the magnitude of this field and in what direction is it pointing?''  In particular, these test particles tell us the \emph{force} of the field at any given location.  Because they exert a force on their test particles, wind, electricity, and magnetism are all examples of \textbf{force fields}.  Note: a force itself is an example of a thing with a magnitude and a direction.  Therefore, a force is a vector, and all force fields are themselves vector fields.
+\end{itemize}
+
+\section{Electromagnetism is the Quintessential Vector Field\\Theory}
+
+
+
+\section{Why Do We Care?}
+I mentioned in [a prior section] that general relativity does \emph{not} describe a vector field.  There is no effervescent, invisible ``thing" permeating space which exerts a force on particles.  I nevertheless spend considerable space in this thesis discussing the nature of vector fields, and it is reasonable for you to ask why.
+
+While general relativity is not a vector field theory, it sure looks like one in a lot of contexts.  After all, gravity itself was assumed to be either a vector or scalar field until the mid-1910's.  In fact, approximating gravity as such a field is \emph{so good} that we can gain a lot of insight by simply pretending and treating it as one.  This has the advantage of saving us the rigamarole of the formulary of general relativity, while still training our intuition.
+
+Most of all, though, pretending that gravity is described as a vector field allows us to use the ultimate field theory, electromagnetism, as a model we can emulate.  This is a huge boon to us; We couldn't ask for a more complete instruction set.  David Griffiths, in the opening pages to his \emph{Introduction to Electrodynamics}, explains:
+  
+\begin{displayquote}
+$[$The electromagnetic forces are$]$ the \emph{only} fundamental forces that are completely understood.  All other theories draw their inspiration from electrodynamics; none can claim experimental verification at this stage.  So electrodynamics, a beautifully complete and successful theory, has become a kind of paradigm for physicists: an ideal model than other theories strive to emulate.
+\end{displayquote}
+
+So while we know (for some quite subtle reasons) that gravity \emph{cannot} ultimately be a field theory like electromagnetism, it sure looks like one at first glance.  If we treat it as such temporarily, what does that get us?  A lot of saved time:  We already know how vector fields work from electrodynamics; there's nothing strictly \emph{new} to work out.
+
+\section{Gravity as a Vector Field Theory}
+Maxwell tells us that the divergence of the electric field is constant, in proportion to the charge density, $\rho_c$:
+\begin{equation}
+\nabla \cdot \mathbf{E} = \frac{\rho_c}{\epsilon_0}
+\end{equation}
+This just describes a totally diverging field, which, incidentally, is exactly what a vector gravity should look like.  Let's say that the gravitational field, $\mathbf{g}$ is sourced by some mass density according to an equation of the same form:
+\begin{equation}
+\nabla \cdot \mathbf{g} = -\kappa \rho_m
+\end{equation}
+(for some unit-fixing constant $\kappa$)\\
+I have inserted a minus sign here simply because where two charges of like sign repel, two masses of like sign attract (never mind that there is only one sign of mass available to us).\\
+therefore, gravity has this and this and this in common with e\&m...\\
+therefore...\\
+\begin{center}
+\framebox[1.05\width]{\textbf{Gravity is electromagnetism with funny signs.}}
+\end{center}
+%\subsection{}
+
+
+
+\end{document}  

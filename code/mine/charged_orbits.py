@@ -1,8 +1,9 @@
 import numpy as np
 from scipy.integrate import odeint
 
-# [r,theta,phi,rdot,thetadot,phidot] 
-init_state = [100.,np.pi/2.,0.,1.,0.,1.]
+# [r,rdot,phi,phidot] 
+init_state = [100.,1000.,np.pi,100.]
+
 
 # define some constants
 Jz = 1.
@@ -10,47 +11,44 @@ k = 1.
 E = 1.
 m = 1.
 Q = 1.
-        
+L = 10.
     
 def dstate_dt(state, t):    
     # unpack state vector
     r = state[0]
-    theta = state[1]
+    rdot = state[1]
     phi = state[2]
-    rdot = state[3]
-    thetadot = state[4]
-    phidot = state[5]
+    phidot = state[3]
     
     dstate = np.zeros_like(state)
     dstate[0] = rdot
-    dstate[1] = thetadot
+    dstate[1] = ((r * phidot**2) + 1/(r**2) - (L * phidot)/(r**2))
     dstate[2] = phidot
-    dstate[3] = (1./(2. * rdot)) * ((((2.*Jz**2.)/(m**2*r**3))*rdot) + k * (1./(r**2))*rdot + k * (((-1. * Jz**2)/(r**4)) * rdot + (k/(r**5))*rdot)) # r''
-    dstate[4] = 0. # theta''
-    dstate[5] = k/m * (1./(r**4) * rdot * phidot) - (2./r * rdot * phidot) # phi''
-
+    dstate[3] = L/(r**2) - rdot/r
+    
     return dstate
 
-t = np.arange(0.0,50.,0.1)
+t = np.arange(0.0,.2*np.pi,0.0001)
 
 finalstate = odeint(dstate_dt, init_state, t)
 
 # convert from spherical to cartesian
-
+theta = np.pi/2
 r = finalstate[:,0]
-theta = finalstate[:,1]
 phi = finalstate[:,2]
 
-x = r * sin(phi) * cos(theta)
-y = r * sin(phi) * sin(theta)
-z = r * cos(phi)
+x = r * np.sin(theta) * np.cos(phi)
+y = r * np.sin(theta) * np.sin(phi)
+
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 fig = plt.figure()
-ax = fig.gca(projection='3d')
-ax.plot(x,y,z)
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_zlabel('z')
+#plt.plot(x,y)
+plt.scatter(x,y,c=np.log10(t),edgecolors='none',s=20)
+plt.xlabel('X position')
+plt.ylabel('Y position')
+cb = plt.colorbar()
+cb.set_label('log(time)')
+plt.scatter(0,0,marker='x',s=100,color='black')
+
 plt.show()

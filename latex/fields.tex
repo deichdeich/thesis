@@ -4,18 +4,18 @@
 %\geometry{landscape}                % Activate for for rotated page geometry
 %\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
 \usepackage{graphicx}
-\usepackage{amssymb}
+\usepackage{amsmath,amsthm,amssymb,amsfonts}
 \usepackage{epstopdf}
 \usepackage{csquotes}
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 
-\title{Theory of Fields}
+\title{Electromagnetism as an Analog to Gravity: Some Field Theory}
 \date{}                                           % Activate to display a given date or no date
 
 \begin{document}
 \maketitle
-\section*{For the reader}
-While it is not necessary to use math to describe the physical phenomena of this chapter at some level, a complete treatment will require knowledge of at least vector calculus.  In endeavoring to not alienate any readers, I have structured this chapter like so:  All \textbf{odd-numbered} sections contain only qualitative explanations.  These constitute my best efforts at crafting accurate descriptions which have no mathematical components.  Those can be found in the \textbf{even-numbered} sections.
+\section*{Some math and some not-math: how this chapter is structured}
+While it is not necessary to use math to describe the physical phenomena of this chapter at some level, a complete treatment will require knowledge of at least vector calculus and some relativistic mechanics.  In endeavoring to not alienate any readers, I have structured this chapter like so:  All \textbf{odd-numbered} sections contain only qualitative explanations.  These constitute my best efforts at crafting accurate descriptions which have no mathematical components.  Those can be found in the \textbf{even-numbered} sections.
 
 It is my goal that the reader who is not interested in the mathematics can read only the odd-numbered sections and arrive at the end of the chapter with an equivalent -- if less rigorous -- notion of the topic at hand as the reader who slogged through the whole thing.
 
@@ -41,9 +41,195 @@ While the weather-vane-plus-spinning-gizmo would be wholly sufficient, we can ma
 Notice that those iron filings are performing the exact same task as the styrofoam ball before:   They are test particles that enable us to answer the question: ``At any given point, what's the magnitude of this field and in what direction is it pointing?''  In particular, these test particles tell us the \emph{force} of the field at any given location.  Because they exert a force on their test particles, wind, electricity, and magnetism are all examples of \textbf{force fields}.  Note: a force itself is an example of a thing with a magnitude and a direction.  Therefore, a force is a vector, and all force fields are themselves vector fields.
 \end{itemize}
 
-\section{Electromagnetism is the Quintessential Vector Field\\Theory}
 
 
+\section{Electromagnetism is the Simplest Vector Field Theory}
+While that title may be a little sensationalist, I assure you it has meaning (or at least, that I find it meaningful).  I'm going to build a vector field from scratch, and I'm going to do it by asking what the simplest vector field theory is that would describe something physical.  By ``simplest'', I mean two things:  One, that it describe \emph{only} vector fields, and two, that there exists no term whose removal would leave what remains a valid vector field.
+
+Then, armed with this most fundamental of vector field theories, it will be shown that it \emph{exactly} describes electromagnetism.  I hope that my use of the word ``simplest'' is now, if not wholly legitimated, somewhat excused.  Let's begin.
+\subsection{A Description of What We're Looking For}
+We seek an equation (or set of equations) which describe the direction and magnitude of a vector for any given place and time.  This is quite analogous to what we seek in classical mechanics--- there, we're looking for an equation (or set of equations) which gives the direction and magnitude of a vector.  That the classical mechanics vector refers to the position at a specific time of a single particle and the field theory vector refers to the value in spacetime of a field is somewhat immaterial.  The basic program is common to both analyses: Start with a co\"{o}rdinate-independent object (the Lagrangian) to derive derivative relationships (the equations of motion for classical mechanics, the field equations for field theory) which can be solved to return the desired vector.
+
+So that tells us where to start:  We seek the vector field Lagrangian.
+
+
+\subsection{There are some helpful constraints on the Lagrangian}
+A Lagrangian is a beautiful thing:  No matter what co\"{o}rdinates you're in, the Lagrangian (and associated Euler-Lagrange equations) will give you the correct equations of motion.  How shall we design a Lagrangian to describe a vector field?
+
+Incidentally, that observation above gives us our a requirement for the Lagrangian:  It must be co\"{o}rdinate independent.  If this isn't the case, then we can derive different physical laws by changing the way we describe space, which is mad.  Classical mechanics deals with this by defining the Lagrangian as a relationship between scalars:  $L = T-U$.  Therefore, we require:
+\begin{itemize}
+\item[1.] \emph{A Lagrangian must be a scalar.}
+\end{itemize}
+
+Now, I said earlier that to be the simplest possible vector field theory, we must describe \emph{only} vector fields.  What could this mean?  How could a vector field theory describe anything else?
+
+Well, what if we had a vector field which was really the gradient of a scalar field?  Would we want that to be included in the description of a pure vector field?  No:  scalar fields have their own Lagrangians;  we can always split up a``mixed" field into its scalar and vector pieces.  Therefore:
+
+\begin{itemize}
+\item[2.] \emph{A vector field Lagrangian should describe \emph{only} vector fields.}
+\end{itemize}
+
+It will transpire that this is equivalent to depending only on first derivatives.  I chose the vector-fields-only requirement because the first derivative requirement is physically motivated, and I'm trying to do this purely mathematically.
+
+\subsection{Designing the Lagrangian}
+We have all the pieces we need.  We now seek a mathematical description of the Lagrangian.  What form should it take?  Upon what should it depend?  We can gain insight by considering our requirements.  Let's take the second requirement (no hidden scalar fields) first:
+
+Call our vector field $A_\mu$.  Suppose $A_\mu$ is composed of two vector fields, one of which is really the gradient of a scalar field:
+\begin{align*}
+A_\mu &= T_\mu + S_\mu\\
+S_\mu &= \partial_\mu \phi
+\end{align*}
+
+We want to make some object out of $A_\mu$ which removes dependence on $S_\mu$.  We can do this by noting cross-derivative equality for scalar field divergences:
+\begin{equation}
+\partial_\nu \partial_\mu \phi - \partial_\mu \partial_\nu \phi = 0
+\end{equation}
+
+Therefore, if we take the difference of cross-derivatives of $A_\mu$, we will \emph{necessarily} not depend on $S_\mu$:
+\begin{align*}
+\partial_\mu A_\nu - \partial_\nu A_\mu &= \left(\partial_\mu T_\nu + \partial_\mu S_\nu\right) - \left(\partial_\nu T_\mu + \partial_\nu S_\mu\right)\\
+&= \left(\partial_\mu T_\nu + \partial_\mu \partial_\nu \phi\right) - \left(\partial_\nu T_\mu + \partial_\nu \partial_\mu \phi\right)\\
+&= \partial_\mu T_\nu - \partial_\nu T_\mu + \underbrace{\partial_\mu \partial_\nu \phi - \partial_\nu \partial_\mu \phi}_\text{=0}\\
+&= \partial_\mu T_\nu - \partial_\nu T_\mu
+\end{align*}
+
+
+
+For this reason, our Lagrangian will to have something to do with the object
+\begin{equation}\label{eq:fmewnew}
+\partial_\mu A_\nu - \partial_\nu A_\mu\doteq F_{\mu\nu}
+\end{equation}
+
+Now we demand that our Lagrangian be a scalar\footnote{I get confused about this so I'll make this note:  We don't want to depend on scalar \emph{fields} for the reasons stated.  However, we absolutely want the Lagrangian \emph{itself} to be a scalar thing to preserve co\"{o}rdinate independence.}.  There are quite a few ways to arrange (\ref{eq:fmewnew}), a second-rank tensor, such that it's a scalar.  Which do we want?
+
+Consider in a larger context the role that the Lagrangian plays.  The Lagrangian is the thing we plop into the action, which is the thing we want to minimize.  In the context of classical mechanics, we seek the trajectory which minimizes the difference between the potential and kinetic energies.  What scalar are we trying to minimize with a field?  I argue that it is some notion of Pythagorean distance:  Given any two values of a field, $A_{\mu1}$ and $A_{\mu2}$, we expect that the intervening points go directly from $A_{\mu1}$ to $A_{\mu2}$; that is to say, it should take the shortest path.\footnote{Note here that I am using a general notion of ``length'': This is the length in however many dimensions your vector $A_\mu$ lives in (4, for our purposes).  Furthermore, I have mentioned nothing about the metric.  I am doing this entire analysis in flat Minkowski space in Cartesian co\"{o}rdinates.  This should cause concern, but I assure you it all works out.}
+
+Okay, so how do we minimize this?  Consider the one-dimensional analog, a particle trajectory:  $x_\mu$.  The total length (squared), $\lambda$, would be given by the simple dot product:
+
+\begin{equation}
+\lambda^2 = x_\mu x^\mu
+\end{equation}
+
+If it's traveling on some curve parameterized by an arbitrary $s$, we should add up the infinitesimal dot products:
+\begin{equation}\label{eq:arbitrary_curve}
+\lambda^2 = \int \frac{d x_\mu}{d s}\frac{d x^\mu}{ds} ds
+\end{equation}
+
+Then, minimizing (\ref{eq:arbitrary_curve}) will give us the path of a particle, $x_\mu$, as a function of $s$\footnote{Hey look at the classical free particle action!: $S =  \frac{1}{2}m \int\dot{x}^2dt = \frac{1}{2}m\int\frac{x_\mu}{dt}\frac{x^\mu}{dt}dt$ hmm...}.
+
+
+So, the takeaway is that in order to create a length-minimizing scalar action we need to have a Lagrangian which depends on a dot product of derivatives of the object of interest.
+
+Our object of interest here is the field $A_\mu$.  We have already shown that there is an attractive arrangement of derivatives of $A_\mu$, namely $F_{\mu\nu} = \partial_\mu A_\nu - \partial_\nu A_\mu$.  Therefore we define our Lagrangian
+
+\begin{equation}\label{eq:em_lagr}
+L \doteq (\partial_\mu A_\nu - \partial_\nu A_\mu)(\partial^\mu A^\nu - \partial^\nu A^\mu) = F_{\mu\nu}F^{\mu\nu}.
+\end{equation}
+
+With the resulting action integrated over all 4 co\"{o}rdinates:
+
+\begin{equation}\label{eq:em_act}
+\boxed{S = \int F_{\mu\nu}F^{\mu\nu} d^4x.}
+\end{equation}
+
+I've boxed something, so that probably means I think it's important.  Let's think about it for a second.  All I have done is taken an arbitrary vector field and made some arguments about some requirements for it to describe something physical.  At first glance, there's nothing all that amazing about (\ref{eq:em_act}).  It's the outcome of some judiciously applied restrictions on a mathematical object; it hasn't revealed anything about nature.
+ 
+After all, (\ref{eq:em_act}) isn't strictly describing any natural phenomena.  Sure, from the outset I demanded that it describe a physically possible vector field, but based on what I've done so far, there's no way to \emph{do} anything with it.   That's because we would like to know how this vector field affects things moving through it.  For that, we need another Lagrangian.  I'm going to come back to (\ref{eq:em_act}) --- specifically, what field equations does it give us? --- but to give it physical significance, let's look at the measurable quantities (particle interactions) associated with our general $A_\mu$.
+
+\subsection{Particle Interaction}
+To make this a physically relevant theory, we need to know what happens to a particle in the presence of a field.  Specifically, we wish to understand exactly how the field affects the particle's trajectory.  Therefore, we need to come up with another Lagrangian, this time describing the motion of a particle.  Demanding that this, too, be a scalar, we again want to minimize length, but this time of the particle's trajectory.  So we know there will be a term that looks like
+\begin{equation*}
+\kappa_1 \sqrt{\dot{x}_\alpha\dot{x}^\alpha},
+\end{equation*}
+where $\kappa_1$ is some constant and the dots refer to derivatives with respect to whatever variable you wish to use to parameterize.
+
+But this says nothing about how the field affects the particle.  To do that, we can take the dot product of the trajectory and the field, remembering to parameterize with respect to the same thing \footnote{\textbf{this is a bullshit reason.  why not $x^\mu A_\mu$? No clue. Ask someone about it}}:
+
+\begin{equation*}
+\kappa_2 \dot{x^\alpha}A_\alpha,
+\end{equation*}
+
+for some constant $\kappa_2$.  Putting them together, we have for our Lagrangian,
+
+\begin{equation}\label{eq:particle_lagr}
+L = \kappa_1 \sqrt{\dot{x}_\alpha\dot{x}^\alpha} + \kappa_2 \dot{x}_\alpha A^\alpha.
+\end{equation}
+The corresponding action is integrated with respect to whatever variable is responsible for the derivatives in the Lagrangian (let's call it $t$, for absolutely no reason):
+
+\begin{equation}\label{eq:particle_act}
+S = \int\kappa_1 \sqrt{\dot{x}_\alpha\dot{x}^\alpha} + \kappa_2 \dot{x}_\alpha A^\alpha dt.
+\end{equation}
+
+So now we have a Lagrangian and corresponding action which will give us something measurable: equations of motion of a particle.\footnote{Note that I could have started with this subsection; I haven't used anything from 2.1,2.2, or 2.3.  I ordered it this way because I wanted to make sure we had some description of the field before we started using it, but I could have just as easily started with the particle interaction.}  Let's look at those.
+
+\subsection{Wherein I Blow Your Mind}
+Starting with our Lagrangian,
+\begin{equation}\label{eq:particle_lagr}
+L = \kappa_1 \sqrt{\dot{x}_\alpha\dot{x}^\alpha} + \kappa_2 \dot{x}_\alpha A^\alpha,
+\end{equation}
+we derive the equations of motion with our friends Euler and Lagrange:
+
+\begin{align}
+\frac{\partial L}{\partial x^\nu} &= \kappa_2 \dot{x}_\nu\frac{\partial A^\alpha}{\partial x^\nu}\nonumber\\
+&= \kappa_2 \dot{x}_\nu A^{\alpha,\nu}
+\end{align}
+\begin{align}
+\frac{\partial L}{\partial \dot{x}^\nu} &= \kappa_1\frac{\dot{x}^\nu}{\sqrt{\dot{x}_\alpha\dot{x}^\alpha}} + \kappa_2 A^\nu\nonumber\\
+\Rightarrow \frac{d}{dt}\left(\frac{\partial L}{\partial \dot{x}^\nu}\right) &=  \kappa_1\frac{\ddot{x}^\nu}{\sqrt{\dot{x}_\alpha\dot{x}^\alpha}} + \kappa_2 \dot{A}^\nu
+\end{align}
+
+Therefore, with
+\begin{align}
+\frac{d}{dt}\left(\frac{\partial L}{\partial \dot{x}^\nu}\right) - \frac{\partial L}{\partial x^\nu} = 0,
+\end{align}
+
+we have
+
+\begin{align}\label{eq:almost_done}
+\kappa_1\frac{\ddot{x}^\nu}{\sqrt{\dot{x}_\alpha\dot{x}^\alpha}} = -\kappa_2 \dot{x}_\nu A^{\alpha,\nu} - \kappa_2 \dot{A}^\nu.
+\end{align}
+
+
+To deal with the $\dot{A}^\nu$ term, use the chain rule:
+\begin{equation}
+\dot{A}^\nu = \frac{\partial x_\alpha}{\partial t}\frac{\partial A^\nu}{\partial x_\alpha} = \dot{x_\alpha} A^{\nu,\alpha}
+\end{equation}
+
+And, inserting into (\ref{eq:almost_done}), we have
+\begin{equation}\label{eq:xdd}
+\kappa_1\frac{\ddot{x}^\nu}{\sqrt{\dot{x}_\alpha\dot{x}^\alpha}} = -\kappa_2 \dot{x}_\nu\left(A^{\alpha,\nu} - A^{\nu,\alpha}\right).
+\end{equation}
+
+Huh.  That last term in (\ref{eq:xdd}) is the definition of $F^{\nu\alpha}$.  Weird.  Let's play around with these equations:
+
+Taking advantage of the summation notation, we can rewrite (\ref{eq:xdd}) as
+\begin{equation}\label{eq:intermediate}
+\kappa_1\frac{\ddot{x}^\nu}{\sqrt{\dot{x}_\alpha\dot{x}^\alpha}} =  -\kappa_2 \left[\dot{x}_0 A^{\nu,0} - A^{0,\nu} + \left(\dot{x}_i A^{j,i} + \dot{x}_i A^{i,j}\right)\right],
+\end{equation}
+where summation over the $i,j$ indicates the 1,2,3 components of $A^\mu$.
+
+Now do some labeling.  Suppose our position vector $x_\mu$ corresponds, in Cartesian spacetime co\"{o}rdinates, to a covariant four-position $\left(x_0,x_1,x_2,x_3\right) = \left(-ct,x,y,z\right)$.  Then to differentiate this with respect to time (specifically, co\"{o}rdinate time) would mean $\frac{dx_\mu}{dt} =\dot{x}_\mu = \left(-c,\dot{x},\dot{y},\dot{z}\right)$.  Furthermore, if it \emph{is} a four-position, then the quantity $\frac{1}{{\sqrt{\dot{x}_\alpha\dot{x}^\alpha}}}$ is constant, normally called $\gamma$. Considering these points in the context of (\ref{intermediate}), we have,
+\begin{equation}
+\kappa_1\gamma\ddot{x}^\nu = -\kappa_2\left[\left(\frac{1}{c}\dot{\mathbf{A}} - \nabla A^{0}\right) + \left(\left(\dot{\mathbf{x}} \cdotp\nabla\right) \mathbf{A} + \nabla \left(\dot{\mathbf{x}}\cdotp \mathbf{A}\right)\right)\right]
+\end{equation}
+
+Which we can simplify using the identity $\left(\dot{\mathbf{x}} \cdotp\nabla\right) \mathbf{A} + \nabla \left(\dot{\mathbf{x}}\cdotp \mathbf{A}\right) = \mathbf{\dot{x}} \times (\nabla \times \mathbf{A})$,
+
+\begin{equation}
+\kappa_1\gamma\ddot{x}^\nu = -\kappa_2\left[\left(\frac{1}{c}\dot{\mathbf{A}} - \nabla A^{0}\right) + \mathbf{\dot{x}} \times (\nabla \times \mathbf{A})\right].
+\end{equation}
+
+Now, we see that, completely naturally, we have two objects in the parentheses which themselves act as separate fields.  Let's give these \emph{totally arbitrary} names:
+\begin{align}
+\mathbf{E} &\doteq \frac{1}{c}\dot{\mathbf{A}} - \nabla A^{0}\\
+\mathbf{B} &\doteq \nabla \times \mathbf{A}
+\end{align}
+Finally --- and here is where your mind is blown --- treating $\dot{\mathbf{x}}$ as a regular old velocity, $\mathbf{v}$, relabeling $-\kappa_2$ as $q$ (for absolutely no reason), and noting that the term on the left-hand side is a force (call it $\mathbf{F}$), we have
+
+\begin{equation}\label{eq:lorentz}
+\boxed{\mathbf{F} = q\left(\mathbf{E+v\times B}\right)},
+\end{equation}
+the Lorentz force law.
 
 \section{Why Do We Care?}
 This thesis is exploring a subtle effect of the gravitational field, and so it is in our interest to understand fields.  However, the subtle effect, Kerr spacetime, is a direct result of general relativity, and I mentioned in [a prior section] that general relativity does \emph{not} describe a vector field.  There is no effervescent, invisible ``thing" permeating space which exerts a force on particles.  I nevertheless spend considerable space in this thesis discussing the nature of vector fields, and it is reasonable for you to ask why.
@@ -59,7 +245,7 @@ $[$The electromagnetic forces are$]$ the \emph{only} fundamental forces that are
 So while we know (for some quite subtle reasons) that gravity \emph{cannot} ultimately be a field theory like electromagnetism, it sure looks like one at first glance.  If we treat it as such temporarily, what does that get us?  A lot of saved time:  We already know how vector fields work from electrodynamics; there's nothing strictly \emph{new} to work out.
 
 \section{Gravity as a Vector Field Theory}
-Maxwell tells us that the divergence of the electric field is constant, in proportion to the charge density, $\rho_c$:
+Maxwell tells us that the divergence of the electric field around some charge is constant, in proportion to the charge density, $\rho_c$:
 \begin{equation}
 \nabla \cdot \mathbf{E} = \frac{\rho_c}{\epsilon_0}
 \end{equation}

@@ -48,12 +48,21 @@ All quantities refer to Fig.\ref{fig:charged_spinning_sphere}.  Our system is a 
 The electric potential is unchanged from a static sphere: $V = \frac{Q}{4\pi\epsilon_0r}$.
 
 
-Then, to probe the trajectories of a particle of charge $q$ near the spinning sphere, we need to look at the Lagrangian
+Then, to probe the trajectories of a particle of charge $q$ near the spinning sphere, we need to look at the Lagrangian $L = \frac{1}{2}m\mathbf{v}^2 - qV + q\mathbf{v}\cdot\mathbf{A}$:
 
 \begin{equation}\label{eq:particle_lagr}
 L = \frac{1}{2}m\left(\dot{r}^2 + r\cos\dot{\theta} + r\sin^2\theta\dot{\phi}\right) - \frac{qQ}{4\pi\epsilon_0r} + \frac{\mu_0qQl}{8\pi}\frac{sin^2\theta}{r}\dot{\theta}.
 \end{equation}
  
+For this analysis, we restrict ourselves to the $\theta = \pi/2$ plane.  Having done this, the Lagrangian reveals two constants:  Angular momentum about the $z$ axis, $J_z \equiv \frac{\partial L}{\partial \dot{\phi}}$, and the total energy, $E$.  Rewriting the resultant equations of motion in terms of these constants is helpful in setting initial conditions.
+
+The relevant equations of motion are
+\begin{align}
+\ddot{r} &= \frac{J_z}{4\pi m^2 r^3} + \frac{qQ}{4\pi\epsilon_0 m r^2} - \frac{\mu_0 q Q l}{8 \pi m^2}\left(\frac{J_z}{3r^4} - \frac{\mu_0 q Q l}{16\pi r^5}\right)\\
+\dot{\phi} &= \frac{J_z}{r^2m} - \frac{\mu_0qQl}{8\pi m r^3}
+\end{align}
+
+
  
 
 

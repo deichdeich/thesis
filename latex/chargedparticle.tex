@@ -36,7 +36,7 @@ Then, making special relativistic considerations, we can derive necessary magnet
   \label{fig:charged_spinning_sphere}
 \end{figure}
 
-So, we're studying orbits in the Kerr spacetime, which is the consequence of a spinning mass.  Accounting for the above mapping then, we should expect the analogous E\&M system to be represented by Fig.\ref{fig:charged_spinning_sphere}:  A charged spinning sphere.  Specifically, we want to study the orbit of a charged particle near the sphere.  More to the point of this thesis, we seek how the orbits of the particles change when the spin of the central sphere changes.
+So, we're studying orbits in the Kerr spacetime, which is the consequence of a spinning mass.  Accounting for the above mapping then, we should expect the analogous E\&M system to be represented by Fig.\ref{fig:charged_spinning_sphere}:  A charged spinning sphere.  Specifically, we want to study the orbit of a charged particle near the sphere.  More to the point of this thesis, we seek how the orbits of the particles change when the spin of the central sphere changes.  The E\&M model will help us build intuition about the full gravity case.
 
 \section{A Description of the Relevant Magnetic Vector Potential}
 All quantities refer to Fig.\ref{fig:charged_spinning_sphere}.  Our system is a solid sphere of radius $R$ with constant surface charge density $\sigma$, rotating about the $z$ axis with some angular frequency $\omega$.
@@ -58,16 +58,65 @@ For this analysis, we restrict ourselves to the $\theta = \pi/2$ plane.  Having 
 
 The relevant equations of motion are
 \begin{align}
-\ddot{r} &= \frac{J_z}{4\pi m^2 r^3} + \frac{qQ}{4\pi\epsilon_0 m r^2} - \frac{\mu_0 q Q l}{8 \pi m^2}\left(\frac{J_z}{3r^4} - \frac{\mu_0 q Q l}{16\pi r^5}\right)\\
-\dot{\phi} &= \frac{J_z}{r^2m} - \frac{\mu_0qQl}{8\pi m r^3}
+\ddot{r} &= \frac{J_z}{4\pi m^2 r^3} + \frac{qQ}{4\pi\epsilon_0 m r^2} - \frac{\mu_0 q Q l}{8 \pi m^2}\left(\frac{J_z}{3r^4} - \frac{\mu_0 q Q l}{16\pi r^5}\right)\label{eq:r_eom}\\
+\dot{\phi} &= \frac{J_z}{r^2m} - \frac{\mu_0qQl}{8\pi m r^3}\label{eq:ph_eom}
 \end{align}
 
+Of note is that (\ref{eq:r_eom}) has both attractive and repulsive terms, with different regimes of domination.  The electric term, $\frac{qQ}{4\pi\epsilon_0 m r^2}$, is repulsive, and so will not give bound orbits for large $r$.  However, it also grows large more slowly than the attractive magnetic terms, which depend on $1/r^4$ and $1/r^5$.  So, closed orbital motion will only occur for very close particles.
 
- 
+\section{Numerical Simulation}
+We're interested in how changes in the sphere's angular frequency affects the orbits of particles near the sphere.  In the context of (\ref{eq:particle_lagr}) and the resulting equations of motion, (\ref{eq:r_eom}) and (\ref{eq:ph_eom}), change in angular frequency is encoded in change in the angular momentum, $l$.  While we could have left $l$ as an arbitrary function of time, $l(t)$ and found equations which depended on some $\dot{l}$ term, it is more helpful in building intuition to leave it as is and perform numerical simulations which change $l$ explicitly.
+
+To perform the numerical simulation, (\ref{eq:r_eom}) and (\ref{eq:ph_eom}) were written with all constants unity\footnote{if this worries you, it's really just lazy nondimensionalization--- it prevents us from solving for any helpfully paramterized initial conditions, but it gives a quick picture of the behavior of the system} and plugged into a Python ODE solver, \texttt{odeint} in the \texttt{scipy} scientific computation package.
+
+
+
+As a first test case with $l = 0$, we retrieve a closed elliptical orbit (Fig.\ref{fig:closed_em_orbit})
+
+
+When $l$ takes a small value, the system exhibits precession about the sphere (Fig. \ref{fig:constant_l_em_orbit}).
 
 
 
 
+In an exaggerated model analogy of a pulsar glitch, we step-function $l$ to instantaneously increase tenfold (Fig. \ref{fig:step_func_em_orbit})
 
+
+Finally, we get a little funky with $l = \sin(t)$ (Fig.\ref{fig:sin_em_orbit}).  This has some interesting and, to me at the moment, obscure behavior:  The particle initially appears bound, but as time goes on, its orbit grows and grows until the repulsive electric term dominates and the particle flies off to infinity.  It looks like there is some strange momentum transfer occurring which would be good to investigate.
+
+\section{Applying this to Gravity}
+So, this gives us some notion of what to expect for particles in Kerr geometry:  In a weak-field setting, they will exhibit precession for a mass with constant spin.  A step-function spin will give their trajectories take the intuitive kick:  Ignoring any momentum in the particle, they will be cast suddenly in a new orbit.  The sinusoidally changing spin is less helpful here as there's no field of opposite sign to repel the particle at large $r$.  Nonetheless, we can expect the particle to grow in orbit.  An interesting thing to investigate for would be some kind of resonance:  How is the orbital frequency of the particle related to the angular frequency of the mass?  Are there relationships between these frequencies which don't result in a growing orbit?
+\newpage
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[scale=.5]{/Users/alexdeich/thesis/latex/figs/closed_em_orbit.png}
+  \end{center}
+  \caption{A charged particle orbiting a charged static sphere (the cross at the origin) exhibits closed elliptical motion.}
+  \label{fig:closed_em_orbit}
+\end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[scale=.5]{/Users/alexdeich/thesis/latex/figs/closed_em_orbit.png}
+  \end{center}
+  \caption{$l = 0.005$}
+  \label{fig:constant_l_em_orbit}
+\end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[scale=.5]{/Users/alexdeich/thesis/latex/figs/step_func_em_orbit.png}
+  \end{center}
+  \caption{$l = 0.005 \rightarrow l=0.05$.  This basically what we'd expect; the particle trajectory is just two static cases glued together.  In this case, we are assuming the particle has negligible mass, so its momentum does not affect the change in trajectory.}
+  \label{fig:step_func_em_orbit}
+\end{figure}
+
+\begin{figure}[h]
+  \begin{center}
+    \includegraphics[scale=.5]{/Users/alexdeich/thesis/latex/figs/sin_em_orbit.png}
+  \end{center}
+  \caption{$l = sin(t)$}
+  \label{fig:sin_em_orbit}
+\end{figure}
 
 \end{document}  

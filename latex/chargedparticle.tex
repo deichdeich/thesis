@@ -42,13 +42,42 @@ So, we're studying orbits in the Kerr spacetime, which is the consequence of a s
 All quantities refer to Fig.\ref{fig:charged_spinning_sphere}.  Our system is a solid sphere of radius $R$ with constant surface charge density $\sigma$, rotating about the $z$ axis with some angular frequency $\omega$.
 
  The magnetic vector potential at an arbitrary point $(r,\theta,\phi)$ outside the sphere is given by $\mathbf{A} = \frac{\mu_0R^4\sigma}{3}\frac{\sin\theta}{r^2}\mathbf{\hat{\phi}}$.  The derivation for this is reproduced in Appendix [insert number].  For our purposes, it is helpful to reparameterize the vector potential with the angular momentum, $l$ and total charge $Q$ instead\footnote{This change is made using the angular momentum per unit mass, $I\omega/M$, with the moment of inertia of a sphere, $I = 2MR^2/5$.}:
- \begin{equation}
+ \begin{equation}\label{eq:vec_pot}
  \mathbf{A} = \frac{1}{2}\frac{\mu_0 Q l}{4\pi}\frac{\sin\theta}{r^2}\mathbf{\hat{\phi}}
  \end{equation}
 The electric potential is unchanged from a static sphere: $V = \frac{Q}{4\pi\epsilon_0r}$.
 
+It is worth stopping here and considering how this applies to the analogy of E\&M with gravity.  I have written in (\ref{eq:vec_pot}) the vector potential of the object I want to act as an analogue to a spinning mass.  The potential determines the trajectories of charged particles, so it plays the role of the metric in this analogy.  Combining (\ref{eq:vec_pot}) with the electric potential, then, the relativistic four-potential reads
+\begin{equation}\label{eq:em_4_pot}
+A^\mu = Q\left(
+\begin{array}{c}
+\frac{1}{4\pi c\epsilon_0r}\\
+0\\
+0\\
+\frac{1}{2}\frac{\mu_0  l}{4\pi}\frac{\sin\theta}{r^2}
+\end{array}
+\right).
+\end{equation}
 
-Then, to probe the trajectories of a particle of charge $q$ near the spinning sphere, we need to look at the Lagrangian $L = \frac{1}{2}m\mathbf{v}^2 - qV + q\mathbf{v}\cdot\mathbf{A}$:
+We expect gravity to affect the motions of particles in the same way (up to a difference of sign).  Therefore, in order to affect particle motion in the same way as (\ref{eq:em_4_pot}), we expect the form of the $(t,\nu)$ column of the metric to take after the form of  (\ref{eq:vec_pot}).  However, a metric is necessarily a symmetric object, so any element in the $\mu,\nu$ is also in the $\nu,\mu$ position.  Therefore, we expect:
+
+\begin{equation}\label{eq:rough_metric}
+g^{\mu\nu} =
+\left(
+\begin{array}{cccc}
+t t &0 &0 &\phi t\\
+0 &\dots&0&0\\
+0&0&\dots&0\\
+t \phi&0&0&\phi\phi
+\end{array}
+\right)
+\end{equation}
+for some undefined $t,\phi$ elements.
+
+So, by insisting that: 1) the metric of a spinning mass mimic the form of the potential for the spinning charged object, and 2) the metric be symmetric, we recover the $\phi$-time coupling which characteristic of Kerr spacetime.  While not terribly rigorous, I find this a satisfying way of justifying what is at first a strange quality.
+
+\section{Particle Trajectories}
+To probe the trajectory of a particle of charge $q$ near the spinning sphere, we need to look at the Lagrangian $L = \frac{1}{2}m\mathbf{v}^2 - qV + q\mathbf{v}\cdot\mathbf{A}$:
 
 \begin{equation}\label{eq:particle_lagr}
 L = \frac{1}{2}m\left(\dot{r}^2 + r\cos\dot{\theta} + r\sin^2\theta\dot{\phi}\right) - \frac{qQ}{4\pi\epsilon_0r} + \frac{\mu_0qQl}{8\pi}\frac{sin^2\theta}{r}\dot{\theta}.

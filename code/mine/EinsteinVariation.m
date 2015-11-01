@@ -1,3 +1,5 @@
+(*By Joel Franklin, https://people.reed.edu/~jfrankli*)
+
 BeginPackage["EinsteinVariation`"]
 
 MetricFromDS::usage=

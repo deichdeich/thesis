@@ -41,12 +41,10 @@ finalstate = odeint(dstate_dt, init_state, t)
 theta = np.pi/2
 r = finalstate[:,0]
 phi = finalstate[:,2]
-    
 x = r * np.cos(phi)
 y = r * np.sin(phi)
     
-    
-    
+#plot
 plt.figure()
 plt.scatter(x,y,c=(t),s=10,edgecolors='none')
 plt.xlabel('X position')
@@ -55,21 +53,3 @@ cb = plt.colorbar()
 cb.set_label('time')
 plt.scatter(0,0,marker='x',s=100,color='black')
 plt.show()
-"""
-plt.title('init_state:{}'.format(init_state))
-plt.scatter(x,y,c=np.log10(t),s=10,edgecolors='none')
-plt.xlabel('X position')
-plt.ylabel('Y position')
-cb = plt.colorbar()
-cb.set_label('log(time)')
-plt.scatter(0,0,marker='x',s=100,color='black')
-plt.savefig('{}_spatial.png'.format(init_state))
-    
-plt.figure()
-plt.title('init_state:{}'.format(init_state))
-plt.plot(t,r)
-plt.xlim(9.9,10)
-plt.xlabel('time')
-plt.ylabel('distance from center')
-plt.savefig('{}_radius.png'.format(init_state))
-"""

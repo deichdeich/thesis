@@ -5,28 +5,23 @@ from scipy.integrate import odeint
 # [r,rdot,phi,phidot] 
 init_state = [2.,0.,0.,0.]
 
-
-# define some constants
-Jz = 1.
-k = 1.
-E = 1.
-m = 1.
-Q = 1.
-
-        
 def dstate_dt(state, t): 
-    # unpack state vector
-    
+   
+   #this is a step function change in angular momentum
     if t<100:
         L = -0.005
     if t>100:
         L = 0.005
     
+    #this is a constant angular momentum
     #L = -0.005
+    
+    #unpack the state vector
     r = state[0]
     rdot = state[1]
     phi = state[2]
-        
+
+    #time-evolve
     dstate = np.zeros_like(state)
     dstate[0] = rdot
     dstate[1] = 1/r**3 - 1/r**2 + L * (-1/r**4 - L/(r**5))

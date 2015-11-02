@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 
 # [r,rdot,phi,phidot] 
-init_state = [2.,0.,0.,0.]
+init_state = [2.,0.,0.]
 
 def dstate_dt(state, t): 
    

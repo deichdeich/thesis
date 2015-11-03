@@ -16,13 +16,13 @@ Q = 1.
         
 def dstate_dt(state, t): 
     # unpack state vector
-    
-    if t<100:
+    """
+    if t<50:
         L = -0.005
-    if t>100:
-        L = 0.005
-    
-    #L = -0.005
+    if t>50:
+        L = 0.05
+    """
+    L = np.sin(t)/10.
     r = state[0]
     rdot = state[1]
     phi = state[2]
@@ -33,7 +33,7 @@ def dstate_dt(state, t):
     dstate[2] = 1/(r**2) + L/r**4
     return dstate
     
-t = np.arange(0.1,200.,0.001)
+t = np.arange(0.1,500.,0.001)
     
 finalstate = odeint(dstate_dt, init_state, t)
     
@@ -48,11 +48,12 @@ y = r * np.sin(phi)
     
     
 plt.figure()
-plt.scatter(x,y,c=(t),s=10,edgecolors='none')
+#plt.scatter(x,y,c=(t),s=10,edgecolors='none')
+plt.plot(x,y)
 plt.xlabel('X position')
 plt.ylabel('Y position')
-cb = plt.colorbar()
-cb.set_label('time')
+#cb = plt.colorbar()
+#cb.set_label('time')
 plt.scatter(0,0,marker='x',s=100,color='black')
 plt.show()
 """

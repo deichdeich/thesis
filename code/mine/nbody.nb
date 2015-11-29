@@ -1,0 +1,310 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     11604,        301]
+NotebookOptionsPosition[     10944,        274]
+NotebookOutlinePosition[     11298,        290]
+CellTagsIndexPosition[     11255,        287]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[
+ RowBox[{"ClearAll", "[", "\"\<Global`*\>\"", "]"}]], "Input",
+ CellChangeTimes->{{3.657656541421077*^9, 3.6576565533502398`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"<<", 
+  "\"\</Users/alexdeich/thesis/code/mine/ThesisTools.m\>\""}]], "Input",
+ CellChangeTimes->{{3.6576565212992992`*^9, 3.657656533408655*^9}}],
+
+Cell["Initialize state vector with {{r,P},{rd,Pd}}", "Text",
+ CellChangeTimes->{{3.657656971623807*^9, 3.657656992177842*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"Nparticles", " ", "=", " ", "10"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"InitVecs", " ", "=", " ", 
+   RowBox[{"Table", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"RandomReal", "[", 
+          RowBox[{"{", 
+           RowBox[{"1", ",", "10"}], "}"}], "]"}], ",", 
+         RowBox[{"RandomReal", "[", 
+          RowBox[{"{", 
+           RowBox[{"0", ",", 
+            RowBox[{"2", " ", "Pi"}]}], "}"}], "]"}]}], "}"}], ",", 
+       RowBox[{"{", 
+        RowBox[{"0", ",", "0"}], "}"}]}], "}"}], ",", "Nparticles"}], "]"}]}],
+   ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"timesteps", " ", "=", " ", "10"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"wholestory", " ", "=", " ", 
+   RowBox[{"Table", "[", 
+    RowBox[{"InitVecs", ",", "timesteps"}], "]"}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.657656558575818*^9, 3.657656569607521*^9}, {
+   3.657656774690971*^9, 3.65765677750777*^9}, {3.657656821999013*^9, 
+   3.657656852791051*^9}, {3.657656951127582*^9, 3.657656966336935*^9}, {
+   3.657657227842772*^9, 3.6576573241595297`*^9}, {3.657758334160811*^9, 
+   3.657758342134416*^9}, {3.657758732412862*^9, 3.65775873267721*^9}, {
+   3.657763373666677*^9, 3.657763375585361*^9}, {3.657763413052034*^9, 
+   3.6577634412535753`*^9}, {3.6577636595069427`*^9, 3.657763663463732*^9}, {
+   3.657764718776582*^9, 3.657764731885457*^9}, {3.657764945594451*^9, 
+   3.6577649463262777`*^9}, {3.657765570016335*^9, 3.6577655795559*^9}, 
+   3.657765667485751*^9, {3.6577669541260033`*^9, 3.657766997572801*^9}, {
+   3.657767094525476*^9, 3.6577671038978453`*^9}, {3.657768689845455*^9, 
+   3.657768768858026*^9}, {3.657768817136734*^9, 3.657768825924284*^9}}],
+
+Cell["\<\
+wholestory is organized as {{{timestep,particle}}{{position},{momentum}}}\
+\>", "Text",
+ CellChangeTimes->{{3.65776712696786*^9, 3.6577671671170197`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"G", "[", 
+    RowBox[{"f_", ",", "r1_", ",", "P1_", ",", "i_"}], "]"}], ":=", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "j", ",", "r2", ",", "P2", ",", "distance2", ",", "jforce", ",", 
+       "jforcedir", ",", "totalforce", ",", "forces"}], "}"}], ",", 
+     "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"forces", " ", "=", " ", 
+       RowBox[{"Table", "[", 
+        RowBox[{
+         RowBox[{"{", 
+          RowBox[{"0.", ",", "0."}], "}"}], ",", "Nparticles"}], "]"}]}], ";",
+       "\[IndentingNewLine]", 
+      RowBox[{"For", " ", "[", 
+       RowBox[{
+        RowBox[{"j", "=", "1"}], ",", 
+        RowBox[{"j", "\[LessEqual]", " ", "Nparticles"}], ",", 
+        RowBox[{"j", "++"}], ",", "\[IndentingNewLine]", 
+        RowBox[{
+         RowBox[{"If", "[", 
+          RowBox[{
+           RowBox[{"j", "\[NotEqual]", " ", "i"}], ",", "\[IndentingNewLine]", 
+           RowBox[{
+            RowBox[{"r2", " ", "=", " ", 
+             RowBox[{"f", "[", 
+              RowBox[{"[", 
+               RowBox[{"j", ",", "1", ",", "1"}], "]"}], "]"}]}], ";", 
+            "\[IndentingNewLine]", 
+            RowBox[{"P2", " ", "=", " ", 
+             RowBox[{"f", "[", 
+              RowBox[{"[", 
+               RowBox[{"j", ",", "1", ",", "2"}], "]"}], "]"}]}], ";", 
+            "\[IndentingNewLine]", 
+            RowBox[{"distance2", " ", "=", " ", 
+             RowBox[{"(", 
+              RowBox[{
+               RowBox[{"r1", "^", "2"}], "+", 
+               RowBox[{"r2", "^", "2"}], " ", "-", " ", 
+               RowBox[{"2", "r1", " ", "r2", " ", 
+                RowBox[{"(", 
+                 RowBox[{"Cos", "[", 
+                  RowBox[{"P1", "-", "P2"}], "]"}], ")"}]}]}], ")"}]}], ";", 
+            "\[IndentingNewLine]", 
+            RowBox[{"jforce", " ", "=", " ", 
+             RowBox[{"1", "/", "distance2"}]}], ";", "\[IndentingNewLine]", 
+            RowBox[{"jforcedir", " ", "=", " ", 
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{
+                RowBox[{"r2", "-", "r1"}], ",", 
+                RowBox[{"P2", "-", "P1"}]}], "}"}], "/", 
+              RowBox[{"Sqrt", "[", "distance2", "]"}]}]}], ";", 
+            "\[IndentingNewLine]", 
+            RowBox[{
+             RowBox[{"forces", "[", 
+              RowBox[{"[", "j", "]"}], "]"}], " ", "=", " ", 
+             RowBox[{"jforce", "*", "jforcedir"}]}], ";"}]}], 
+          "\[IndentingNewLine]", "]"}], ";"}]}], "\[IndentingNewLine]", "]"}],
+       ";", "\[IndentingNewLine]", 
+      RowBox[{"Return", "[", 
+       RowBox[{"Total", "[", "forces", "]"}], "]"}], ";"}]}], 
+    "\[IndentingNewLine]", "]"}]}], "\[IndentingNewLine]", 
+  "\[IndentingNewLine]"}]], "Input",
+ CellChangeTimes->{{3.6576570436248198`*^9, 3.65765706137633*^9}, {
+   3.657657194169806*^9, 3.657657254383668*^9}, {3.657657303723249*^9, 
+   3.657657546837583*^9}, 3.657757336338543*^9, {3.6577575243413153`*^9, 
+   3.6577575397150593`*^9}, {3.657757573594067*^9, 3.657757612606743*^9}, {
+   3.6577577341095133`*^9, 3.657757804528776*^9}, {3.6577578369036694`*^9, 
+   3.657757891594454*^9}, {3.657757922860422*^9, 3.65775796427407*^9}, {
+   3.6577581733441677`*^9, 3.657758182604418*^9}, {3.657758286431089*^9, 
+   3.657758287245554*^9}, {3.657758801111804*^9, 3.6577588457260237`*^9}, {
+   3.6577588914295273`*^9, 3.6577590300535316`*^9}, {3.657763247181863*^9, 
+   3.657763275588562*^9}, {3.657763425039735*^9, 3.657763436845881*^9}, {
+   3.657763556596305*^9, 3.6577636313113127`*^9}, {3.657763680134034*^9, 
+   3.657763709583645*^9}, {3.657763783203271*^9, 3.657763865087988*^9}, {
+   3.657764000021393*^9, 3.65776403105337*^9}, {3.657764359312311*^9, 
+   3.657764381671743*^9}, {3.657764427446601*^9, 3.6577644927945557`*^9}, {
+   3.657764549493614*^9, 3.657764557434613*^9}, {3.657765085182087*^9, 
+   3.657765088432583*^9}, {3.657765620660453*^9, 3.6577656502977962`*^9}, {
+   3.657766059076488*^9, 3.657766064088188*^9}, {3.6577661030186357`*^9, 
+   3.657766262613077*^9}, {3.657767268276165*^9, 3.6577672684468803`*^9}, {
+   3.657767324978067*^9, 3.6577673265666847`*^9}, {3.657767384453857*^9, 
+   3.657767431762051*^9}, {3.657767528053144*^9, 3.657767570450429*^9}, {
+   3.6577676306135674`*^9, 3.6577676853721733`*^9}, {3.65776839972546*^9, 
+   3.65776840295378*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", "}"}], ",", 
+   RowBox[{"{", "}"}], ",", 
+   RowBox[{"{", "}"}], ",", 
+   RowBox[{"{", "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{3.657767891730899*^9}]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"GetForces", "[", "state_", "]"}], ":=", 
+  RowBox[{"Module", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"particle", ",", "r1", ",", "P1", ",", "totalforces"}], "}"}], 
+    ",", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"totalforces", " ", "=", " ", 
+      RowBox[{"Table", "[", 
+       RowBox[{
+        RowBox[{"{", "}"}], ",", "Nparticles"}], "]"}]}], ";", 
+     "\[IndentingNewLine]", 
+     RowBox[{"For", "[", 
+      RowBox[{
+       RowBox[{"particle", "=", "1"}], ",", 
+       RowBox[{"particle", "\[LessEqual]", "Nparticles"}], ",", 
+       RowBox[{"particle", "++"}], ",", "\[IndentingNewLine]", 
+       RowBox[{
+        RowBox[{"r1", "=", 
+         RowBox[{"state", "[", 
+          RowBox[{"[", 
+           RowBox[{"particle", ",", "1", ",", "1"}], "]"}], "]"}]}], ";", 
+        "\[IndentingNewLine]", 
+        RowBox[{"P1", " ", "=", " ", 
+         RowBox[{"state", "[", 
+          RowBox[{"[", 
+           RowBox[{"particle", ",", "1", ",", "2"}], "]"}], "]"}]}], ";", 
+        "\[IndentingNewLine]", 
+        RowBox[{
+         RowBox[{"totalforces", "[", 
+          RowBox[{"[", "particle", "]"}], "]"}], "=", 
+         RowBox[{"G", "[", 
+          RowBox[{"state", ",", "r1", ",", "P1", ",", "particle"}], 
+          "]"}]}]}]}], "\[IndentingNewLine]", "]"}], ";", 
+     "\[IndentingNewLine]", 
+     RowBox[{"Return", "[", "totalforces", "]"}]}]}], "\[IndentingNewLine]", 
+   "]"}]}]], "Input",
+ CellChangeTimes->{{3.657767751008684*^9, 3.657767823580274*^9}, {
+  3.65776789920364*^9, 3.657767931085072*^9}, {3.657768331907363*^9, 
+  3.657768332339916*^9}, {3.657768429451659*^9, 3.657768539646556*^9}, {
+  3.657768718481823*^9, 3.657768727572031*^9}, {3.657768796442754*^9, 
+  3.6577688012296753`*^9}}],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"GetForces", "[", "InitVecs", "]"}]], "Input",
+ CellChangeTimes->{{3.657768542015963*^9, 3.657768551416297*^9}, {
+  3.657768828690185*^9, 3.657768829451871*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", "1.492562034525672`"}], ",", "0.40188017951227817`"}], 
+    "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", "0.14175559816462363`"}], ",", "0.018194596692315414`"}], 
+    "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"0.05687568902659129`", ",", "0.09856805998099186`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", "0.12853287509041483`"}], ",", 
+     RowBox[{"-", "0.034047171878138674`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", "0.00007976857194242162`"}], ",", 
+     RowBox[{"-", "0.09249528010789201`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"0.25426194505427874`", ",", "0.17087127059887786`"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"1.4644202963159636`", ",", 
+     RowBox[{"-", "0.40605874041291795`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", "0.08043066586917891`"}], ",", "0.030774538112556996`"}], 
+    "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"0.16117221774854018`", ",", 
+     RowBox[{"-", "0.15619124806347595`"}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"-", "0.09336920592357796`"}], ",", 
+     RowBox[{"-", "0.03149620443458588`"}]}], "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{{3.657768730244651*^9, 3.657768763550312*^9}, {
+  3.65776880918731*^9, 3.657768830367749*^9}}]
+}, Open  ]]
+},
+WindowSize->{808, 619},
+WindowMargins->{{104, Automatic}, {Automatic, 0}},
+FrontEndVersion->"10.2 for Mac OS X x86 (32-bit, 64-bit Kernel) (July 29, \
+2015)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 144, 2, 28, "Input"],
+Cell[705, 24, 170, 3, 28, "Input"],
+Cell[878, 29, 126, 1, 30, "Text"],
+Cell[1007, 32, 1783, 38, 80, "Input"],
+Cell[2793, 72, 164, 3, 30, "Text"],
+Cell[CellGroupData[{
+Cell[2982, 79, 4356, 90, 301, "Input"],
+Cell[7341, 171, 211, 7, 28, "Output"]
+}, Open  ]],
+Cell[7567, 181, 1763, 43, 165, "Input"],
+Cell[CellGroupData[{
+Cell[9355, 228, 184, 3, 28, "Input"],
+Cell[9542, 233, 1386, 38, 80, "Output"]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)

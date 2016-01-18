@@ -107,7 +107,7 @@ G2xy[G_,r_,T_]:=Module[{rd,rdd,Td,Tdd,xd,xdd,yd,ydd},
 	ydd = 2 Cos[T] rd Td+Sin[T] (-r Td^2+rdd)+Cos[T] r Tdd;
 	Return[{{xd,yd},{xdd,ydd}}];
 ]
-xy2radMotion[state_,forces_]:=Module[{x,y,xd,yd,xdd,ydd,r2,rd,Td,rdd,Tdd},
+xy2radMotion[state_,forces_]:=Module[{x,y,xd,yd,xdd,ydd,r2,r,rd,Td,rdd,Tdd},
 	x = state[[1,1]];
 	y = state[[1,2]];
 	xd =state[[2,1]];
@@ -115,11 +115,12 @@ xy2radMotion[state_,forces_]:=Module[{x,y,xd,yd,xdd,ydd,r2,rd,Td,rdd,Tdd},
 	xdd = forces[[1]];
 	ydd = forces[[2]];
 	r2 = x^2+y^2;
-	rd = (x xd+y yd)/Sqrt[r2];
+	r = Sqrt[r2];
+	rd = (x xd+y yd)/r;
 	Td = (x yd-y xd)/r2;
 	rdd = (-4 (x xd+y yd)^2+4 r2 (xd^2+yd^2+x xdd+y ydd))/(4 (r2)^(3/2));
 	Tdd = (y^2 (-xdd y+2 xd yd)-x^2 (xdd y+2 xd yd)+x^3 ydd+x y (2 xd^2-2 yd^2+y ydd))/r2^2;
-	Return[{{rd,Td},{rdd,Tdd}}];
+	Return[{{rd,Td},{rdd-r*Td^2,r*Tdd+2rd*Td}}];
 ]
 xy2rad[point_] := Module[{r,phi,x,y},
 	x = point[[1]];
@@ -197,6 +198,9 @@ Surfaces[m_, a_, T_]:=FullSimplify[{OuterErg[m, a, T], OuterEH[m, a, T], InnerEH
 
 End[]
 EndPackage[]
+
+
+
 
 
 

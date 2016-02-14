@@ -7,7 +7,6 @@ class OrbitalSystem(object):
                  Nparticles,
                  M,
                  a,
-                 nsteps,
                  dt=0.001,
                  interaction_type = "ClassicalNBody",
                  masses = None,
@@ -17,7 +16,6 @@ class OrbitalSystem(object):
         self.interaction_type = interaction_type
         self.M = M
         self.dt = dt
-        self.nsteps = nsteps
         self.a = a
         self.event_horizon = 0
         self.cleanup = []
@@ -95,7 +93,12 @@ class OrbitalSystem(object):
         self.cleanup = []
         
         return(new_state)
+    
+    def TimeEvolve(self,nsteps):
         
+        
+        for step in xrange(nsteps):
+            
     
     def remove_particle(self,particle):
         
@@ -128,7 +131,13 @@ class OrbitalSystem(object):
         self.masses = np.delete(self.masses,[particle1,particle2],axis=0)
         
         new_phase_vector = [self.state[particle1,0,0],self.state[particle1,0,1],[newxd,newyd]]
-        self.state = np.append(self.state,new_phase_vector)
-        self.masses = np.append(self.masses,[mass1+mass2],axis=0)
+        self.state = np.append(self.state,new_phase_vector,axis=0)
+        self.masses = np.append(self.masses,totalmass,axis=0)
         
         self.Nparticles -= 1
+        
+    def trajplot(self,interval):
+    
+    def densityplot(self,interval):
+    
+    def stats(self,frame):

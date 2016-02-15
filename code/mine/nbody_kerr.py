@@ -1,5 +1,7 @@
 from __future__ import division, print_function
 import numpy as np
+import time
+import curses
 import ThesisTools as farts
 from astropy.io import fits
 
@@ -11,8 +13,10 @@ class OrbitalSystem(object):
                  dt=0.001,
                  interaction_type = "ClassicalNBody",
                  masses = None,
-                 use_state = None):
+                 use_state = None,
+                 save_dir = "Users/alexdeich/Dropbox/thesis/code/nbody_output"):
         
+        self.start_particles = Nparticles
         self.Nparticles = Nparticles
         self.interaction_type = interaction_type
         self.M = M
@@ -20,6 +24,7 @@ class OrbitalSystem(object):
         self.a = a
         self.event_horizon = 0
         self.cleanup = []
+        self.save_dir = save_dir
         
         if use_state is not None:
             if use_state.shape == (Nparticles,2,2):
@@ -105,12 +110,35 @@ class OrbitalSystem(object):
         
         
     def TimeEvolve(self,nsteps,comments):
-        
+        t=0
+        ##Get init_state
         if use_state == None:
             self.state = MakeInitialConditions()
         
         print("Generated initial conditions")
         
+        
+        primary = get_header()
+        frame0 = get_hdu()
+        
+        hdulist = fits.HDUList([primary,frame0])
+        for step in xrange(1, nsteps):
+            stepstart = time.time()
+            self.state = UpdateStateVectorsRK4(t)
+            framen = get_hdu()
+            hdulist.append(framen)
+            t += self.dt
+            end = time.time()
+            sys.stdout.write("\rFrame {} of {} completed ({}%).  Last frame took {} seconds.".format(step,
+                                                                                                    nsteps,
+                                                                                                    (step/nsteps)*100),
+                                                                                                    end-start)
+        
+        filenum = farts.get_filenum(dir)
+        fname = "{}/nbody_{}_{}.fits".format(dir,self.start_particles,filenum)
+        hdulist.writeto(fname,clobber=True)
+    
+    def get_header(self):
         prihdr = fits.Header()
         prihdr["NPARTICLES"] = self.Nparticles
         prihdr["INTERACTION"] = self.interaction_type
@@ -120,18 +148,17 @@ class OrbitalSystem(object):
         prihdr["NSTEPS"] = nsteps
         prihdr["COMMENTS"] = comments
         prihdu = fits.PrimaryHDU(header=prihdr)
+    
+        return(prihdu)
         
+    def get_hdu(self):
         transpose_state = self.state.T
-        
-        frame0 = fits.BinTableHDU.from_columns([fits.Column(name='X',format='20A',array = state_transpose[0][0]),
+        frame = fits.BinTableHDU.from_columns([fits.Column(name='X',format='20A',array = state_transpose[0][0]),
                                                 fits.Column(name='Y',format='20A',array = state_transpose[1][0]),
                                                 fits.Column(name='Xd',format='20A',array = state_transpose[0][1]),
                                                 fits.Column(name='Yd',format='20A',array = state_transpose[1][1])])
+        return(frame)
         
-        
-        for step in xrange(1, nsteps):
-            
-    
     def remove_particle(self,particle):
         
         self.state = np.delete(self.state,particle,axis=0)

@@ -1,6 +1,7 @@
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import ThesisTools as farts
+from astropy.io import fits
 
 class OrbitalSystem(object):
     def __init__(self,
@@ -20,9 +21,7 @@ class OrbitalSystem(object):
         self.event_horizon = 0
         self.cleanup = []
         
-        if use_state == None:
-            self.init_state = np.random.random((Nparticles,2,2))
-        else:
+        if use_state is not None:
             if use_state.shape == (Nparticles,2,2):
                 self.init_state = use_state
             else:
@@ -94,10 +93,43 @@ class OrbitalSystem(object):
         
         return(new_state)
     
-    def TimeEvolve(self,nsteps):
+    def MakeInitialConditions(self):
+        vecs = np.ndarray((self.Nparticles,2,2))
+        for vec in xrange(self.Nparticles):
+            r = ((10-5)*np.random.random())+5
+            phi = 2*np.pi*np.random.random()
+            phid = ((1.5-0.5)*np.random.random())+0.5
+            vecs[vec] = [[r*np.cos(phi), r*np.sin(phi)],
+                         [-r*np.sin(phi)*phid, r*np.cos(phi)*phid]]
+        return(vecs)
         
         
-        for step in xrange(nsteps):
+    def TimeEvolve(self,nsteps,comments):
+        
+        if use_state == None:
+            self.state = MakeInitialConditions()
+        
+        print("Generated initial conditions")
+        
+        prihdr = fits.Header()
+        prihdr["NPARTICLES"] = self.Nparticles
+        prihdr["INTERACTION"] = self.interaction_type
+        prihdr["DT"] = self.dt
+        prihdr["BH_M"] = self.M
+        prihdr["SPIN_FUNC"] = self.a
+        prihdr["NSTEPS"] = nsteps
+        prihdr["COMMENTS"] = comments
+        prihdu = fits.PrimaryHDU(header=prihdr)
+        
+        transpose_state = self.state.T
+        
+        frame0 = fits.BinTableHDU.from_columns([fits.Column(name='X',format='20A',array = state_transpose[0][0]),
+                                                fits.Column(name='Y',format='20A',array = state_transpose[1][0]),
+                                                fits.Column(name='Xd',format='20A',array = state_transpose[0][1]),
+                                                fits.Column(name='Yd',format='20A',array = state_transpose[1][1])])
+        
+        
+        for step in xrange(1, nsteps):
             
     
     def remove_particle(self,particle):
@@ -138,6 +170,8 @@ class OrbitalSystem(object):
         
     def trajplot(self,interval):
     
-    def densityplot(self,interval):
+    def densityplot(self,frame):
     
-    def stats(self,frame):
+    def stats(self, interval, statistical_function):
+        #If len(interval)==1: return histogram of that frame
+        #Else: return plot of statistical_function over interval

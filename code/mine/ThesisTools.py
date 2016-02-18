@@ -22,6 +22,10 @@ def SingleParticleNewtonianForce(state, masses, i, Nparticles, soi_radius):#, co
             
     return(np.sum(forces,axis=0))
 
+def ElasticCollision(state,masses):
+    raise ValueError("whoops!")
+
+
 def G2xy(G,r,T):
     
     returnG = np.zeros_like(G)

@@ -2,6 +2,7 @@ from __future__ import division, print_function
 import numpy128 as np
 import time
 import sys
+import os
 import ThesisTools as farts
 from astropy.io import fits
 
@@ -10,31 +11,34 @@ class OrbitalSystem(object):
                  Nparticles,
                  M,
                  a = farts.a0,
-                 dt=0.001,
-                 interaction_type = "ClassicalNBody",
+                 dt=0.01,
+                 interaction = "ClassicalNBody",
                  masses = None,
-                 use_state = None,
+                 init_state = None,
                  save_dir = "/Users/alexdeich/Dropbox/thesis/code/mine/nbody_output"):
         
         self.start_particles = Nparticles
         self.Nparticles = Nparticles
-        self.interaction_type = interaction_type
+        self.interaction_type = interaction
         self.M = M
         self.dt = dt
         self.a = a
         self.event_horizon = 0
         self.cleanup = []
-        self.use_state = np.copy(use_state)
+        if init_state is not None:
+            self.use_state = np.copy(init_state)
+        else:
+            self.use_state = None
         self.save_dir = save_dir
-        self.init_state = np.copy(use_state)
-        self.state = np.copy(use_state)
+        self.init_state = np.copy(init_state)
+        self.state = np.copy(init_state)
         self.fname = ""
         
-        if use_state is not None:
-            if use_state.shape == (Nparticles,2,2):
+        if init_state is not None:
+            if init_state.shape == (Nparticles,2,2):
                 self.init_state = use_state
             else:
-                raise ValueError("Initial state not the right shape: ",use_state.shape,
+                raise ValueError("Initial state not the right shape: ",init_state.shape,
                                  "\nShould be ",(Nparticles,2,2))
     
         if masses == None:
@@ -57,7 +61,8 @@ class OrbitalSystem(object):
                                                                   
                                                                   
         elif self.interaction_type == None:
-            rad = farts.xy2rad(state[particle],(0,0))
+            rad = farts.xy2rad(self.state[particle],(0,0))
+            
         elif self.interaction_type == "ClassicalElastic":
             raise ValueError("ClassicalElastic collisions not implemented yet")
         
@@ -65,9 +70,7 @@ class OrbitalSystem(object):
         r = rad[0,0]   
         phi = rad[0,1]
         
-        if(r > 999 or r < self.event_horizon):
-            if particle not in self.cleanup:
-                self.cleanup.append(particle)
+        
         
         f = np.array(([rad[0,0],rad[1,0]],[rad[0,1],rad[1,1]]))
         G=np.array([[f[0,1],
@@ -79,7 +82,7 @@ class OrbitalSystem(object):
         
     def UpdateStateVectorRK4(self,t):
         self.event_horizon = self.get_event_horizon(t)
-        new_state = np.ndarray(self.state.shape)
+        new_state = np.ndarray((self.Nparticles,2,2))
         
         for particle in xrange(self.Nparticles):
             kstate = np.copy(self.state)
@@ -93,11 +96,18 @@ class OrbitalSystem(object):
             k4 = self.dt * self.SingleParticleDerivativeVector(kstate,particle,t+self.dt)
             new_state[particle] = np.copy(self.state[particle]) + (1/3)*(k1/2 + k2 + k3 + k4/2)
             
+            r = np.sqrt(new_state[particle,0,0]**2+new_state[particle,0,1]**2)
+            if(r > 999 or r < self.event_horizon):
+                if particle not in self.cleanup:
+                    self.cleanup.append(particle)
+                    print("\n{} added to cleanup".format(particle))
+        
         #Get rid of gobbled or ejected particles 
         if self.cleanup != []:
             for particle in self.cleanup:
                 print("\n***particle {} shit the bed at step {}***".format(particle,int(t/self.dt)))
                 self.remove_particle(particle)
+                new_state = np.delete(new_state,particle,axis=0)
                 print("***particle {} removed***".format(particle))
                 self.cleanup.remove(particle)
                 if self.cleanup == []:
@@ -110,9 +120,9 @@ class OrbitalSystem(object):
         self.cleanup = []
         vecs = np.zeros((self.start_particles,2,2))
         for vec in xrange(self.start_particles):
-            r = ((10-5)*np.random.random())+5
+            r = ((12-5)*np.random.random())+5
             phi = 2*np.pi*np.random.random()
-            phid = ((1.5-0.5)*np.random.random())+0.5
+            phid = ((0.1-0.001)*np.random.random())+0.001
             vecs[vec] = [[r*np.cos(phi), r*np.sin(phi)],
                          [-r*np.sin(phi)*phid, r*np.cos(phi)*phid]]
         return(vecs)
@@ -121,14 +131,15 @@ class OrbitalSystem(object):
     def TimeEvolve(self,nsteps,comments):
         self.cleanup = []
         t=0
+        
         ##Get init_state
         if self.use_state == None:
-            self.state = self.MakeInitialConditions()
-            self.init_state = self.state
+            self.state = np.copy(self.MakeInitialConditions())
+            self.init_state = np.copy(self.state)
+            self.Nparticles = len(self.state)
         else:
             self.state = np.copy(self.use_state)
         print("Got initial conditions for {} particles".format(self.start_particles))
-
         
         primary = self.get_header(nsteps,comments)
         frame0 = self.get_hdu()
@@ -146,12 +157,13 @@ class OrbitalSystem(object):
             total_time += steptime
             avg = total_time/step
             perc = 100*((step+1)/nsteps)
-            sys.stdout.write('\rFrame {} of {} completed ({}%).  Step: {}s, Total: {}s, Estimated time remaining: {}s.'.format(step+1,
+            sys.stdout.write('\rFrame {} of {} completed ({}%).  Step: {}s, Total: {}s, Estimated time remaining: {}s. Nparticles: {}'.format(step+1,
                                                                        nsteps,
                                                                        '%0.1f'%perc,
                                                                        '%0.4f'%steptime,
                                                                        '%0.4f'%total_time,
-                                                                       '%i'%(((avg * nsteps)+1)-total_time)))
+                                                                       '%i'%(((avg * nsteps)+1)-total_time),
+                                                                       '%i'%self.Nparticles))
             sys.stdout.flush()
         print("\nWriting to disk...")
         filenum = farts.get_filenum(self.save_dir)
@@ -185,7 +197,6 @@ class OrbitalSystem(object):
         return(frame)
         
     def remove_particle(self,particle):
-        
         self.state = np.delete(self.state,particle,axis=0)
         self.Nparticles -= 1
     
@@ -230,7 +241,7 @@ class OrbitalSystem(object):
         x = []
         y = []
         rng = max(interval)-min(interval)
-        if rng > 300:
+        if rng < 300:
             stepsize = 1
         elif rng < 20000:
             stepsize = 10
@@ -250,6 +261,23 @@ class OrbitalSystem(object):
         fig.gca().add_artist(circle1)
         plt.show()
     
+    def movie(self):
+        data = fits.open(self.fname)
+        for i in xrange(1,len(data)):
+            plotdata = np.rec.array([data[i].data["X"],data[i].data["Y"]],names=("x","y"))
+            plt.figure()
+            plt.scatter(plotdata["x"],plotdata["y"],alpha=0.3)
+            plt.scatter(0,0,marker="x", color="black")
+            circle1 = plt.Circle((0,0),radius = 2,color='r',fill=False)
+            fig = plt.gcf()
+            fig.gca().add_artist(circle1)
+            plt.xlim(-30,30)
+            plt.ylim(-30,30)
+            fname = "/Users/alexdeich/30-particle-force-comparison/newton/frames/{}.png".format(i)
+            plt.savefig(fname)
+        
+        os.system("ffmpeg -framerate 30 -i {}%d.png -c:v libx264 -r 30 -pix_fmt yuv420p out.mp4".format("/Users/alexdeich/30-particle-force-comparison/newton/frames/"))
+         
     def get_event_horizon(self,t):
         return(self.M + np.sqrt(self.M**2 - self.a(t)**2))
     

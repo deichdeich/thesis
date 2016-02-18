@@ -1,3 +1,10 @@
+"""
+Orbit Integrator for Numerical Kerr (OINK)
+
+Author: Alex Deich
+Date: February-ish, 2016
+"""
+
 from __future__ import division, print_function
 import numpy128 as np
 import time
@@ -32,6 +39,7 @@ class OrbitalSystem(object):
         self.save_dir = save_dir
         self.init_state = np.copy(init_state)
         self.state = np.copy(init_state)
+        self.collisions = {}
         self.fname = ""
         
         if init_state is not None:
@@ -53,11 +61,9 @@ class OrbitalSystem(object):
     def SingleParticleDerivativeVector(self,kstate,particle,t):
         if self.interaction_type == "ClassicalNBody":
             rad = farts.xy2rad(kstate[particle],
-                               farts.SingleParticleNewtonianForce(kstate,
-                                                                  self.masses,
-                                                                  particle,
-                                                                  self.Nparticles,
-                                                                  2))
+                               self.SingleParticleNewtonianForce(particle,
+                                                                 2,
+                                                                 2))
                                                                   
                                                                   
         elif self.interaction_type == None:
@@ -70,7 +76,9 @@ class OrbitalSystem(object):
         r = rad[0,0]   
         phi = rad[0,1]
         
-        
+        if(r > 999 or r < self.event_horizon):
+                if particle not in self.cleanup:
+                    self.cleanup.append(particle)        
         
         f = np.array(([rad[0,0],rad[1,0]],[rad[0,1],rad[1,1]]))
         G=np.array([[f[0,1],
@@ -96,11 +104,6 @@ class OrbitalSystem(object):
             k4 = self.dt * self.SingleParticleDerivativeVector(kstate,particle,t+self.dt)
             new_state[particle] = np.copy(self.state[particle]) + (1/3)*(k1/2 + k2 + k3 + k4/2)
             
-            r = np.sqrt(new_state[particle,0,0]**2+new_state[particle,0,1]**2)
-            if(r > 999 or r < self.event_horizon):
-                if particle not in self.cleanup:
-                    self.cleanup.append(particle)
-                    print("\n{} added to cleanup".format(particle))
         
         #Get rid of gobbled or ejected particles 
         if self.cleanup != []:
@@ -114,6 +117,17 @@ class OrbitalSystem(object):
                     print("***cleanup completed***")
         self.cleanup = []
         
+        #Cleanup collided particles
+        if self.collisions != {}:
+            print("*****")
+            for key in self.collisions:
+                p1 = self.collisions[key][1][0]
+                p2 = self.collisions[key][1][1]
+                new_particle = self.combine_particles()
+                print("***{} and {} collided at step{}***".format(p1,p2,int(t/self.dt)))
+                new_state = np.delete(new_state,[self.collisions[key][0],self.collisions[1]],axis=0)
+                new_state = np.append(new_state,new_particle,axis = 0)
+            self.collisions = {}
         return(new_state)
     
     def MakeInitialConditions(self):
@@ -200,6 +214,37 @@ class OrbitalSystem(object):
         self.state = np.delete(self.state,particle,axis=0)
         self.Nparticles -= 1
     
+    def SingleParticleNewtonianForce(self, i, soi_radius, collision_radius):
+        
+        forces = np.zeros([self.Nparticles,2])
+    
+        if self.collisions == {}:
+            keynum = 0
+        else:
+            keynum = max(self.collisions)
+    
+        x1 = self.state[i,0,0]
+        y1 = self.state[i,0,1]
+        newkey = (x1,y1)
+        m1 = self.masses[i]
+        for particle_num in xrange(self.Nparticles):
+            if particle_num != i:
+                m2 = self.masses[particle_num]
+                x2 = self.state[particle_num,0,0]
+                y2 = self.state[particle_num,0,1]
+                distance2 = ((x2-x1)**2+(y2-y1)**2)
+                if distance2 < soi_radius:
+                    jforce = m2/distance2
+                    jforcedir = [x2-x1,y2-y1]/np.sqrt(distance2)
+                    forces[particle_num] = jforce*jforcedir
+                if distance2 < collision_radius:
+                    for key in self.collisions:
+                        if i not in self.collisions[key][1] or particle_num not in self.collisions[key][1]:
+                            self.collisions[keynum] = [(x1,y1),[i,particle_num]]
+            
+        return(np.sum(forces,axis=0))
+    
+    
     def combine_particles(self,particle1,particle2):
         #get phase space of new particle
         
@@ -222,14 +267,14 @@ class OrbitalSystem(object):
         newxd = ((mass1*xd1) + (m2*xd2))/totalmass
         newyd = ((mass1*yd1) + (m2*yd2))/totalmass
         
-        self.state = np.delete(self.state,[particle1,particle2],axis=0)
         self.masses = np.delete(self.masses,[particle1,particle2],axis=0)
         
         new_phase_vector = [self.state[particle1,0,0],self.state[particle1,0,1],[newxd,newyd]]
-        self.state = np.append(self.state,new_phase_vector,axis=0)
         self.masses = np.append(self.masses,totalmass,axis=0)
         
         self.Nparticles -= 1
+        
+        return(new_phase_vector)
     
     def trajplot(self,interval = "all",saveplot = False):
         framelist = fits.open(self.fname)

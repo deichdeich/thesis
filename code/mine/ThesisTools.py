@@ -3,24 +3,18 @@ import os
 import re
 import numpy as np
 
-def SingleParticleNewtonianForce(state, masses, i, Nparticles, soi_radius):#, collision_radius):
-    forces = np.zeros([Nparticles,2])
-    
-    x1 = state[i,0,0]
-    y1 = state[i,0,1]
-    m1 = masses[i]
-    for particle_num in xrange(Nparticles):
-        if particle_num != i:
-            m2 = masses[particle_num]
-            x2 = state[particle_num,0,0]
-            y2 = state[particle_num,0,1]
-            distance2 = ((x2-x1)**2+(y2-y1)**2)
-            if distance2 < soi_radius:
-                jforce = m2/distance2
-                jforcedir = [x2-x1,y2-y1]/np.sqrt(distance2)
-                forces[particle_num] = jforce*jforcedir
-            
-    return(np.sum(forces,axis=0))
+
+
+def MakeInitialConditions(nparticles):
+    vecs = np.zeros((nparticles,2,2))
+    for vec in xrange(nparticles):
+        r = ((12-5)*np.random.random())+5
+        phi = 2*np.pi*np.random.random()
+        phid = ((0.1-0.001)*np.random.random())+0.001
+        vecs[vec] = [[r*np.cos(phi), r*np.sin(phi)],
+                     [-r*np.sin(phi)*phid, r*np.cos(phi)*phid]]
+    return(vecs)
+        
 
 def ElasticCollision(state,masses):
     raise ValueError("whoops!")

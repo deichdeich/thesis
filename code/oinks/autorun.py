@@ -1,3 +1,11 @@
+"""
+autorun.py
+
+this is a little helper script to run and then animate the results from a simulation
+using oinks.OrbitalSystem()
+"""
+
+
 import nbody_kerr as oinks
 import ThesisTools as farts
 

@@ -1,5 +1,7 @@
 """
 Orbit Integrator for Numerical Kerr Solutions (OINKS)
+"It's a real resource hog!"
+
 
 Author: Alex Deich
 Date: February, 2016

@@ -135,15 +135,16 @@ class OrbitalSystem(object):
                 m = 0
                 x = self.collision_dict[key][0][0]
                 y = self.collision_dict[key][0][1]
-                vx = 0
-                vy = 0
+                mvx = 0
+                mvy = 0
                 for particle in particles:
                     m += self.masses[particle]
-                    vx += self.state[particle][1][0]
-                    vy += self.state[particle][1][1]
+                for particle in particles:
+                    mvx += (self.state[particle][1][0]*self.masses[particle])
+                    mvy += (self.state[particle][1][1]*self.masses[particle])
                     big_particle_list.append(particle)
                     big_masses_list.append(m)
-            new_particle = [[x,y],[vx,vy]]
+            new_particle = [[x,y],[mvx/m,mvy/m]]
             big_vector_list.append(new_particle)
 
             self.masses = np.delete(self.masses,big_particle_list,axis=0)

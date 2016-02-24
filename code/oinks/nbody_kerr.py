@@ -25,7 +25,7 @@ class OrbitalSystem(object):
                  collisions = True,
                  masses = None,
                  init_state = None,
-                 save_dir = "/Users/alexdeich/Dropbox/thesis/code/mine/nbody_output"):
+                 save_dir = "./output"):
         
         self.start_particles = Nparticles
         self.Nparticles = Nparticles
@@ -43,7 +43,9 @@ class OrbitalSystem(object):
         self.init_state = np.copy(init_state)
         self.state = np.copy(init_state)
         self.collision_dict = {}
-        self.fname = ""
+        self.collisions=collisions
+        self.fname_list = []
+        self.dirname = ""
         
         if init_state is not None:
             if init_state.shape == (Nparticles,2,2):
@@ -66,7 +68,7 @@ class OrbitalSystem(object):
             rad = farts.xy2rad(kstate[particle],
                                self.SingleParticleNewtonianForce(particle,
                                                                  5,
-                                                                 .01))
+                                                                 .005))
                                                                   
                                                                   
         elif self.interaction_type == None:
@@ -156,19 +158,21 @@ class OrbitalSystem(object):
     def MakeInitialConditions(self):
     
         # this is a stable-ish circular orbit: [[[7,0],[0,.35]]]
-    
         self.cleanup = []
         vecs = np.zeros((self.start_particles,2,2))
         for vec in xrange(self.start_particles):
             r = np.random.normal(7,.15)
             phi = (2*np.pi)*np.random.random()
-            phid = np.random.normal(0.35,0.05)
+            phid = .05
             vecs[vec] = [[r*np.cos(phi), r*np.sin(phi)],
                          [-r*np.sin(phi)*phid, r*np.cos(phi)*phid]]
         return(vecs)
         
         
     def TimeEvolve(self,nsteps,comments,write=True):
+    
+        
+    
         self.cleanup = []
         t=0
         
@@ -184,8 +188,14 @@ class OrbitalSystem(object):
         primary = self.get_header(nsteps,comments)
         frame0 = self.get_hdu()
         
+        filenum = farts.get_filenum(self.save_dir)
+        self.dirname = "{}/nbody_{}_{}".format(self.save_dir,self.start_particles,filenum)
+        os.mkdir(self.dirname)
+        
         hdulist = fits.HDUList([primary,frame0])
         total_time = 0
+        savenums = nsteps/1000
+            
         for step in xrange(1, nsteps):
             stepstart = time.time()
             self.state = self.UpdateStateVectorRK4(t)
@@ -205,13 +215,23 @@ class OrbitalSystem(object):
                                                                        '%i'%(((avg * nsteps)+1)-total_time),
                                                                        '%i'%self.Nparticles))
             sys.stdout.flush()
-        if write == True:
+            if step%1000 == 0:
+            
+                if write == True:
+                    print("\nWriting to disk...")
+                    fname = "{}/{}.fits".format(self.dirname,step)
+                    hdulist.writeto(fname,clobber=True)
+                    print("Frames {} - {} written at {}".format(step-1000,step,fname))
+                    hdulist = fits.HDUList([primary])
+                    self.fname_list.append(fname)
+            
+        if len(hdulist)!=1:
             print("\nWriting to disk...")
-            filenum = farts.get_filenum(self.save_dir)
-            self.fname = "{}/nbody_{}_{}.fits".format(self.save_dir,self.start_particles,filenum)
-            hdulist.writeto(self.fname,clobber=True)
-            print("Data written at {}".format(self.fname))
-    
+            fname = "{}/{}.fits".format(self.dirname,step)
+            hdulist.writeto(fname,clobber=True)
+            print("Frames {} written at {}".format(step,fname))
+            self.fname_list.append(fname)
+                        
     def get_header(self,nsteps,comments=""):
         
         prihdr = fits.Header()
@@ -272,7 +292,7 @@ class OrbitalSystem(object):
                     if the secondary particle is not in there, put it in the entry with the main particle
                     
                     """
-                if self.collisions = True:
+                if self.collisions == True:
                     if distance2 < collision_radius:
                         if self.collision_dict == {}:
                             self.collision_dict[0] = [(x1,y1),[i,particle_num]]
@@ -333,7 +353,7 @@ class OrbitalSystem(object):
         rng = max(interval)-min(interval)
         if rng < 300:
             stepsize = 1
-        elif rng < 20000:
+        elif rng < 21000:
             stepsize = 10
         else:
             stepsize = 500
@@ -359,21 +379,32 @@ class OrbitalSystem(object):
         return what_key
     
     def movie(self):
-        data = fits.open(self.fname)
-        for i in xrange(1,len(data)):
-            plotdata = np.rec.array([data[i].data["X"],data[i].data["Y"]],names=("x","y"))
-            plt.figure()
-            plt.scatter(plotdata["x"],plotdata["y"],alpha=0.3)
-            plt.scatter(0,0,marker="x", color="black")
-            circle1 = plt.Circle((0,0),radius = 2,color='r',fill=False)
-            fig = plt.gcf()
-            fig.gca().add_artist(circle1)
-            plt.xlim(-30,30)
-            plt.ylim(-30,30)
-            fname = "/Users/alexdeich/30-particle-force-comparison/newton/frames/{}.png".format(i)
-            plt.savefig(fname)
+        print("Creating movie...")
+        os.mkdir("{}/movie".format(self.dirname))
+        os.mkdir("{}/movie/frames".format(self.dirname))
+        plt.figure()
+        n=1
+        for fname in self.fname_list:
+            data = fits.open(fname)
+            for i in xrange(1,len(data)):
+                plotdata = np.rec.array([data[i].data["X"],data[i].data["Y"]],names=("x","y"))
+                plt.scatter(plotdata["x"],plotdata["y"],alpha=0.3)
+                plt.scatter(0,0,marker="x", color="black")
+                t = n*self.dt
+                circle1 = plt.Circle((0,0),radius = self.get_event_horizon(t),color='r',fill=False)
+                fig = plt.gcf()
+                fig.gca().add_artist(circle1)
+                plt.xlim(-30,30)
+                plt.ylim(-30,30)
+                fname = "{}/movie/frames/{}.png".format(self.dirname,n)
+                plt.savefig(fname)
+                plt.clf()
+                sys.stdout.write('\rFrame {} completed'.format(n))
+                sys.stdout.flush()
+                n+=1
+            data.close()
         
-        os.system("ffmpeg -framerate 30 -i {}%d.png -c:v libx264 -r 30 -pix_fmt yuv420p out.mp4".format("/Users/alexdeich/30-particle-force-comparison/newton/frames/"))
+        os.system("ffmpeg -framerate 300 -i {}/movie/frames/%d.png -c:v libx264 -r 30 -pix_fmt yuv420p {}/movie/out.mp4".format(self.dirname,self.dirname))
          
     def get_event_horizon(self,t):
         return(self.M + np.sqrt(self.M**2 - self.a(t)**2))

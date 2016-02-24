@@ -192,7 +192,7 @@ class OrbitalSystem(object):
         filenum = farts.get_filenum(self.save_dir)
         self.dirname = "{}/nbody_{}_{}".format(self.save_dir,self.start_particles,filenum)
         os.mkdir(self.dirname)
-        
+        os.mkdir("{}/data".format(self.dirname))
         hdulist = fits.HDUList([primary,frame0])
         total_time = 0
         savenums = nsteps/1000
@@ -220,7 +220,7 @@ class OrbitalSystem(object):
             
                 if write == True:
                     print("\nWriting to disk...")
-                    fname = "{}/{}.fits".format(self.dirname,step)
+                    fname = "{}/data/{}.fits".format(self.dirname,step)
                     hdulist.writeto(fname,clobber=True)
                     print("Frames {} - {} written at {}".format(step-1000,step,fname))
                     hdulist = fits.HDUList([primary])
@@ -228,9 +228,9 @@ class OrbitalSystem(object):
             
         if len(hdulist)!=1:
             print("\nWriting to disk...")
-            fname = "{}/{}.fits".format(self.dirname,step)
+            fname = "{}/data/{}.fits".format(self.dirname,step)
             hdulist.writeto(fname,clobber=True)
-            print("Frames {} written at {}".format(step,fname))
+            print("Frames {} written at {}".format(step+1,fname))
             self.fname_list.append(fname)
                         
     def get_header(self,nsteps,comments=""):
@@ -380,6 +380,7 @@ class OrbitalSystem(object):
         return what_key
     
     def movie(self):
+        print("\n")
         print("Creating movie...")
         os.mkdir("{}/movie".format(self.dirname))
         os.mkdir("{}/movie/frames".format(self.dirname))

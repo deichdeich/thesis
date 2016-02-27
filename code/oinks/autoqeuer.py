@@ -12,7 +12,7 @@ def a1(t):
     else:
         return .99
 
-a_list = [a1]
+a_list = [None,a1]
 
 def a_chooser(inter):
     sim = oinks.OrbitalSystem(nparticles,3,init_state = init_vecs,a=inter,save_dir = "/Volumes/DRIVEYWIVEY/thesis/output")

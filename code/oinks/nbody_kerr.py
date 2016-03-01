@@ -18,8 +18,8 @@ from astropy.io import fits
 class OrbitalSystem(object):
     def __init__(self,
                  Nparticles,
-                 M,
-                 a = farts.a0,
+                 M=1,
+                 a = None,
                  dt=0.01,
                  interaction = "ClassicalNBody",
                  collisions = True,
@@ -46,6 +46,14 @@ class OrbitalSystem(object):
         self.collisions=collisions
         self.fname_list = []
         self.dirname = ""
+        self.plotdata = 0
+        
+        
+        if self.Nparticles == None and self.init_state is not None:
+            self.Nparticles = len(self.init_state)
+            
+        if self.a == None:
+            self.a = farts.a0
         
         if init_state is not None:
             if init_state.shape == (Nparticles,2,2):
@@ -68,7 +76,7 @@ class OrbitalSystem(object):
             rad = farts.xy2rad(kstate[particle],
                                self.SingleParticleNewtonianForce(particle,
                                                                  5,
-                                                                 .005))
+                                                                 0.1))
                                                                   
                                                                   
         elif self.interaction_type == None:
@@ -82,8 +90,8 @@ class OrbitalSystem(object):
         phi = rad[0,1]
         
         if(r > 999 or r < self.event_horizon):
-                if particle not in self.cleanup:
-                    self.cleanup.append(particle)        
+            if particle not in self.cleanup:
+                self.cleanup.append(particle)        
         
         f = np.array(([rad[0,0],rad[1,0]],[rad[0,1],rad[1,1]]))
         G=np.array([[f[0,1],
@@ -98,6 +106,8 @@ class OrbitalSystem(object):
         new_state = np.ndarray((self.Nparticles,2,2))
         
         for particle in xrange(self.Nparticles):
+            #sys.stdout.write("\r{}".format(particle))
+            #sys.stdout.flush()
             kstate = np.copy(self.state)
             #do RK4 shit
             k1 = self.dt * self.SingleParticleDerivativeVector(kstate,particle, t)
@@ -111,24 +121,36 @@ class OrbitalSystem(object):
             
         
         #Get rid of gobbled or ejected particles 
+        
         if self.cleanup != []:
+            new_state = np.delete(new_state,self.cleanup,axis=0)
+            self.remove_particle(particle)
             for particle in self.cleanup:
                 print("\n***particle {} shit the bed at step {}***".format(particle,int(t/self.dt)))
-                self.remove_particle(particle)
-                new_state = np.delete(new_state,particle,axis=0)
                 print("***particle {} removed***".format(particle))
                 self.cleanup.remove(particle)
                 if self.cleanup == []:
                     print("***cleanup completed***")
         self.cleanup = []
         
+        
         big_particle_list = []
         big_vector_list = []
-        big_masses_list = []
+        new_masses_list = []
         
         
 
         #Cleanup collided particles
+        ## For each collision in the collision_dict,
+        ## grab the particles associated with that collision
+        ## grab the coordinates of the collision
+        ## sum the masses of the particles that are colliding
+        ## sum the momenta
+        ## add all the offending particles to "big_particle_list"
+        ## add the new mass to "big_masses_list"
+        ## delete all the particles and masses in "big_particle_list"
+        ## add the new particle and new mass.
+        
         if self.collision_dict != {}:
             for key in self.collision_dict:
                 particles = self.collision_dict[key][1]
@@ -143,12 +165,12 @@ class OrbitalSystem(object):
                     mvx += (self.state[particle][1][0]*self.masses[particle])
                     mvy += (self.state[particle][1][1]*self.masses[particle])
                     big_particle_list.append(particle)
-                    big_masses_list.append(m)
+                new_masses_list.append(m)
             new_particle = [[x,y],[mvx/m,mvy/m]]
             big_vector_list.append(new_particle)
 
             self.masses = np.delete(self.masses,big_particle_list,axis=0)
-            self.masses = np.append(self.masses,np.array(big_masses_list),axis = 0)
+            self.masses = np.append(self.masses,np.array(new_masses_list),axis = 0)
             new_state = np.delete(new_state,big_particle_list,axis=0)
             new_state = np.append(new_state,np.array(big_vector_list),axis = 0)
             self.Nparticles = len(new_state)
@@ -156,30 +178,15 @@ class OrbitalSystem(object):
 
         return(new_state)
     
-    def MakeInitialConditions(self):
     
-        # this is a stable-ish circular orbit: [[[7,0],[0,.35]]]
-        self.cleanup = []
-        vecs = np.zeros((self.start_particles,2,2))
-        for vec in xrange(self.start_particles):
-            r = np.random.normal(7,.15)
-            phi = (2*np.pi)*np.random.random()
-            phid = .05
-            vecs[vec] = [[r*np.cos(phi), r*np.sin(phi)],
-                         [-r*np.sin(phi)*phid, r*np.cos(phi)*phid]]
-        return(vecs)
-        
-        
     def TimeEvolve(self,nsteps,comments,write=True):
-    
-        
-    
         self.cleanup = []
         t=0
         
         ##Get init_state
         if self.use_state == None:
-            self.state = np.copy(self.MakeInitialConditions())
+            self.cleanup = []
+            self.state = np.copy(farts.make_initial_conditions(self.start_particles))
             self.init_state = np.copy(self.state)
             self.Nparticles = len(self.state)
         else:
@@ -189,7 +196,7 @@ class OrbitalSystem(object):
         primary = self.get_header(nsteps,comments)
         frame0 = self.get_hdu()
         
-        filenum = farts.get_filenum(self.save_dir)
+        filenum = farts.get_filenum(self.save_dir,self.start_particles)
         self.dirname = "{}/nbody_{}_{}".format(self.save_dir,self.start_particles,filenum)
         os.mkdir(self.dirname)
         os.mkdir("{}/data".format(self.dirname))
@@ -234,7 +241,6 @@ class OrbitalSystem(object):
             self.fname_list.append(fname)
                         
     def get_header(self,nsteps,comments=""):
-        
         prihdr = fits.Header()
         prihdr["NPARTS"] = self.Nparticles
         prihdr["INTERACT"] = self.interaction_type
@@ -252,15 +258,19 @@ class OrbitalSystem(object):
         
     def get_hdu(self):
         state_transpose = self.state.T
-        frame = fits.BinTableHDU.from_columns([fits.Column(name='X',format='20A',array = state_transpose[0][0]),
-                                                fits.Column(name='Y',format='20A',array = state_transpose[1][0]),
-                                                fits.Column(name='Xd',format='20A',array = state_transpose[0][1]),
-                                                fits.Column(name='Yd',format='20A',array = state_transpose[1][1])])
+        frame = fits.BinTableHDU.from_columns([fits.Column(name='X',format='E',array = state_transpose[0][0]),
+                                                fits.Column(name='Y',format='E',array = state_transpose[1][0]),
+                                                fits.Column(name='Xd',format='E',array = state_transpose[0][1]),
+                                                fits.Column(name='Yd',format='E',array = state_transpose[1][1]),
+                                                fits.Column(name='MASS',format='E',array = self.masses)])
         return(frame)
         
     def remove_particle(self,particle):
-        self.state = np.delete(self.state,particle,axis=0)
-        self.Nparticles -= 1
+        self.state = np.delete(self.state,self.cleanup,axis=0)
+        for key in self.collision_dict:
+            if particle in self.collision_dict[key][1]:
+                self.collision_dict[key][1].remove(particle)
+        self.Nparticles = len(self.state)
     
     def SingleParticleNewtonianForce(self, i, soi_radius, collision_radius):
         
@@ -293,7 +303,7 @@ class OrbitalSystem(object):
                     if the secondary particle is not in there, put it in the entry with the main particle
                     
                     """
-                if self.collisions == True:
+                if self.collisions == True and i not in self.cleanup and particle_num not in self.cleanup:
                     if distance2 < collision_radius:
                         if self.collision_dict == {}:
                             self.collision_dict[0] = [(x1,y1),[i,particle_num]]
@@ -338,7 +348,7 @@ class OrbitalSystem(object):
         new_phase_vector = [[self.state[particle1,0,0],self.state[particle1,0,1]],[newxd,newyd]]
         self.masses = np.append(self.masses,np.array([totalmass]),axis=0)
         
-        self.Nparticles -= 1
+        self.Nparticles = len(self.state)
         
         return(new_phase_vector)
     
@@ -379,25 +389,33 @@ class OrbitalSystem(object):
                 what_key = key
         return what_key
     
-    def movie(self):
+    def movie(self,skip_mkdir = False):
         print("\n")
         print("Creating movie...")
-        os.mkdir("{}/movie".format(self.dirname))
-        os.mkdir("{}/movie/frames".format(self.dirname))
+        if skip_mkdir == False:
+            os.mkdir("{}/movie".format(self.dirname))
+            os.mkdir("{}/movie/frames".format(self.dirname))
         plt.figure()
         n=1
         for fname in self.fname_list:
             data = fits.open(fname)
             for i in xrange(1,len(data)):
-                plotdata = np.rec.array([data[i].data["X"],data[i].data["Y"]],names=("x","y"))
-                plt.scatter(plotdata["x"],plotdata["y"],alpha=0.3)
+                self.plotdata = np.rec.array([data[i].data["X"],data[i].data["Y"],data[i].data["mass"]],names=('x','y','mass'))
+                plt.scatter(self.plotdata['x'],self.plotdata['y'],c=self.plotdata['mass'])
+                cb = plt.colorbar()
+                plt.clim(0,50)
+                cb.set_label('Particle mass')
                 plt.scatter(0,0,marker="x", color="black")
                 t = n*self.dt
                 circle1 = plt.Circle((0,0),radius = self.get_event_horizon(t),color='r',fill=False)
                 fig = plt.gcf()
                 fig.gca().add_artist(circle1)
+                fig.gca().axes.get_xaxis().set_visible(False)
+                fig.gca().axes.get_yaxis().set_visible(False)
                 plt.xlim(-30,30)
                 plt.ylim(-30,30)
+                plt.axes().set_aspect('equal')
+                plt.title('Nparticles: {}'.format(len(self.plotdata['x'])))
                 fname = "{}/movie/frames/{}.png".format(self.dirname,n)
                 plt.savefig(fname)
                 plt.clf()
@@ -406,8 +424,9 @@ class OrbitalSystem(object):
                 n+=1
             data.close()
         
+        print('\n')
         os.system("ffmpeg -framerate 300 -i {}/movie/frames/%d.png -c:v libx264 -r 30 -pix_fmt yuv420p {}/movie/out.mp4".format(self.dirname,self.dirname))
-         
+        
     def get_event_horizon(self,t):
         return(self.M + np.sqrt(self.M**2 - self.a(t)**2))
     

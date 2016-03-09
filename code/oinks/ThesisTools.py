@@ -1,22 +1,9 @@
 from __future__ import division
 import os
-import re
 import numpy as np
+from math import sqrt
 
-
-
-def MakeInitialConditions(nparticles):
-    vecs = np.zeros((nparticles,2,2))
-    for vec in xrange(nparticles):
-        r = ((12-5)*np.random.random())+5
-        phi = 2*np.pi*np.random.random()
-        phid = ((0.1-0.001)*np.random.random())+0.001
-        vecs[vec] = [[r*np.cos(phi), r*np.sin(phi)],
-                     [-r*np.sin(phi)*phid, r*np.cos(phi)*phid]]
-    return(vecs)
-        
-
-def ElasticCollision(state,masses):
+def elastic_collision(state,masses):
     raise ValueError("whoops!")
 
 
@@ -39,18 +26,44 @@ def G2xy(G,r,T):
     
     return(returnG)
 
-def get_filenum(dir):
-    filenums = [[0]]
-    
-    regex = re.compile(r'\d+')
-    
+def get_filenum(dir,npart):
+    nums = [0]
     for filename in os.listdir(dir):
-        
-        if(filename[:5] == "nbody" and filename[-5:] == ".fits"):
-            filenums.append([int(x) for x in regex.findall(filename[-7:])])
-    return(1+int(max(filenums)[0]))
+        if(filename[:5] == "nbody"):
+            pieces = filename.split("_")
+            if int(pieces[-2]) == npart:
+                nums.append(int(pieces[-1]))
+    return(max(nums)+1)
 
 
+def make_initial_conditions(nparticles):
+    
+    # this is a stable-ish circular orbit: [[[7,0],[0,.35]]]
+    vecs = np.zeros((nparticles,2,2))
+    for vec in xrange(nparticles):
+        r = np.random.normal(10,.5)
+        phi = (2*np.pi)*np.random.random()
+        phid = abs(np.random.normal(0.05,0.15))
+        vecs[vec] = [[r*np.cos(phi), r*np.sin(phi)],
+                     [-r*np.sin(phi)*phid, r*np.cos(phi)*phid]]
+    return(vecs)
+
+
+def make_initial_conditions2(nparticles,bh_m,a0):
+    vecs = np.zeros((nparticles,2,2))
+    for vec in xrange(nparticles):
+        r_init = np.nan
+        while np.isnan(r_init):
+        	energy = np.random.normal(5,.05)
+        	jz = np.random.normal(7,1)
+        	r_init = (1/(8 * bh_m)) * (4*(a0**2) - (a0**2) * energy**2 + jz**2 + np.sqrt((-(a0**2) * (-4 + energy**2) + jz**2)**2 - 48 * (-(a0**2) * energy + jz)**2 * bh_m**2))
+        r_init += np.random.normal(0.5,0.25)
+        phi = 2*np.pi*np.random.random(1)
+        rd = 0
+        phid = (pow(a0,5)*bh_m + 2*pow(a0,3)*bh_m*r_init*(-2*bh_m + r_init) + a0*bh_m*pow(r_init,2)*pow(-2*bh_m + r_init,2) - np.sqrt(-(pow(r_init,3)*pow(pow(a0,2) + r_init*(-2*bh_m + r_init),2)*(pow(a0,4)*bh_m*(-1 + pow(rd,2)) - pow(a0,2)*r_init*(2*bh_m*r_init + pow(r_init,2)*pow(rd,2) + pow(bh_m,2)*(-4 + pow(rd,2))) + bh_m*pow(r_init,2)*(-4*pow(bh_m,2) + 4*bh_m*r_init + pow(r_init,2)*(-1 + pow(rd,2)))))))/((pow(a0,2)*bh_m - pow(r_init,3))*pow(pow(a0,2) + r_init*(-2*bh_m + r_init),2))
+        vecs[vec] = [[r_init*np.cos(phi), r_init*np.sin(phi)],
+                    [-r_init * np.sin(phi) * phid, np.cos(phi)* r_init * phid]]
+    return(vecs)
 
 def xy2rad(state,forces):
     

@@ -22,15 +22,15 @@ class OrbitalSystem(object):
                  M=1,
                  a = None,
                  dt=0.01,
-                 interaction = "ClassicalNBody",
-                 collisions = True,
+                 interaction = False,
+                 collisions = 'elastic',
                  masses = None,
                  init_state = None,
                  save_dir = "./output"):
         
         self.start_particles = Nparticles
         self.Nparticles = Nparticles
-        self.interaction_type = interaction
+        self.interaction = interaction
         self.M = M
         self.dt = dt
         self.a = a
@@ -45,43 +45,14 @@ class OrbitalSystem(object):
         self.state = np.copy(init_state)
         self.collision_dict = {}
         self.collisions=collisions
+        self.collided_particles = np.array([])
         self.fname_list = []
         self.dirname = ""
         self.plotdata = 0
         self.skip_mkdir=False
         self.nsteps = 0
         
-        self.pathlist1 = ['/Users/alexdeich/output/nbody_3000_1/data/1000.fits',
-        '/Users/alexdeich/output/nbody_3000_1/data/2000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/3000.fits',
-		'/Users/alexdeich/output/nbody_3000_1/data/4000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/5000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/6000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/7000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/8000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/9000.fits'
- 		'/Users/alexdeich/output/nbody_3000_1/data/10000.fits',
-		'/Users/alexdeich/output/nbody_3000_1/data/11000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/12000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/13000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/14000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/15000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/16000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/17000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/18000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/19000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/20000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/21000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/22000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/23000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/24000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/25000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/26000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/27000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/28000.fits',
- 		'/Users/alexdeich/output/nbody_3000_1/data/29000.fits',
-        '/Users/alexdeich/output/nbody_3000_1/data/29999.fits']
-        
+
         if self.Nparticles == None and self.init_state is not None:
             self.Nparticles = len(self.init_state)
             
@@ -105,18 +76,14 @@ class OrbitalSystem(object):
                                  "\nGiven length:", len(masses))
     
     def SingleParticleDerivativeVector(self,kstate,particle,t):
-        if self.interaction_type == "ClassicalNBody":
+        
+        if self.interaction == False:
+            rad = farts.xy2rad(self.state[particle],(0,0))
+        else:
             rad = farts.xy2rad(kstate[particle],
                                self.SingleParticleNewtonianForce(particle,
                                                                  5,
                                                                  0.001))
-                                                                  
-                                                                  
-        elif self.interaction_type == None:
-            rad = farts.xy2rad(self.state[particle],(0,0))
-            
-        elif self.interaction_type == "ClassicalElastic":
-            raise ValueError("ClassicalElastic collisions not implemented yet")
         
         
         r = rad[0,0]   
@@ -200,11 +167,52 @@ class OrbitalSystem(object):
                 new_state = np.append(new_state,np.array(big_vector_list),axis = 0)
                 self.Nparticles = len(new_state)
                 self.collision_dict = {}
-            """elif self.collisions == "elastic":
+                self.collided_particles = np.array([])
+                
+                
+                """
+                For each particle in a given collision,
+                get the distance to every other particle
+                get the closest particle
+                evaluate that particle in an elastic collision
+                up the state vector accordingly
+                """
+                
+            elif self.collisions == "elastic":
                 if self.collision_dict != {}:
+                    checked_particles = []
                     for key in self.collision_dict:
-                        particles = self.collision_dict[key][1]"""
-                        
+                        particles = self.collision_dict[key][1]
+                        for i in particles:
+                            if i not in checked_particles:
+                                checked_particles.append(i)
+                                distances = {}
+                                for j in particles:
+                                    if j != i and j not in checked_particles:
+                                        checked_particles.append(j)
+                                        distances[j] = np.sqrt((self.state[i][0][0]-self.state[j][0][0])**2+(self.state[i][0][1]+self.state[j][0][1])**2) # adds an entry in the distances dictionary with the particle number as the key and the value as the distance to the particle being evaluated
+                                    k = min(distances, key = distances.get) # get the particle number of the closest particle
+                                    particle1 = self.state[i]
+                                    m1 = masses[particle1]
+                                    x1 = particle1[0][0]
+                                    x1d = particle1[1][1]
+                                    y1 = particle1[0][1]
+                                    y1d = particle1[1][1]
+                                    particle2 = self.state[k]
+                                    m2 = masses[particle1]
+                                    x2 = particle2[0][0]
+                                    x2d = particle2[1][1]
+                                    y2 = particle2[0][1]
+                                    y2d = particle2[1][1]
+                                    newp1d = [(x1d*(m1-m2) + 2*m2*x2d)/(m1+m2),(y1d*(m1-m2) + 2*m2*y2d)/(m1+m2)]
+                                    newp2d = [(x2d*(m1-m2) + 2*m2*x1d)/(m1+m2),(y2d*(m1-m2) + 2*m2*y1d)/(m1+m2)]
+                                    newp1 = [[x1,y1],newp1d]
+                                    newp2 = [[x2,y2],newp2d]
+                                    new_state[i] = newp1
+                                    new_state[k] = newp2
+                self.collision_dict = {}
+        
+        new_state = new_state[new_state[:,0,0].argsort()] # arsort() returns the indices that sort the array.  Here, I'm sorting by x position     
         return(new_state)
     
     
@@ -273,7 +281,7 @@ class OrbitalSystem(object):
     def get_header(self,nsteps,comments=""):
         prihdr = fits.Header()
         prihdr["NPARTS"] = self.Nparticles
-        prihdr["INTERACT"] = self.interaction_type
+        prihdr["INTERACT"] = self.interaction
         prihdr["DT"] = self.dt
         prihdr["BH_M"] = self.M
         if self.a:
@@ -306,32 +314,92 @@ class OrbitalSystem(object):
     def SingleParticleNewtonianForce(self, i, soi_radius, collision_radius):
         
         forces = np.zeros([self.Nparticles,2])
-    
+        
         x1 = self.state[i,0,0]
         y1 = self.state[i,0,1]
-        newkey = (x1,y1)
+        
         m1 = self.masses[i]
         collided1 = 0
-        for particle_num in xrange(self.Nparticles):
-            if particle_num != i:
-                collided2 = 0
-                m2 = self.masses[particle_num]
-                x2 = self.state[particle_num,0,0]
-                y2 = self.state[particle_num,0,1]
-                distance2 = ((x2-x1)**2+(y2-y1)**2)
-                if distance2 < soi_radius:
-                    if self.interaction == "ClassicalNBody":
-                        jforce = m2/distance2
-                        jforcedir = [x2-x1,y2-y1]/np.sqrt(distance2)
-                        forces[particle_num] = jforce*jforcedir
+        
+        if self.interaction=='ClassicalNBody':
+            xmin = x1-soi_radius
+            xmax = x1+soi_radius
+            ymin = y1-soi_radius
+            ymax = y1+soi_radius
+            sliced_indices_x = np.where(np.logical_and(self.state[:,0,0]>xmin,self.state[:,0,0]<xmax))
+            sliced_indices_y = np.where(np.logical_and(self.state[:,0,1]>ymin,self.state[:,0,1]<ymax))
+            sliced_indices = np.intersect1d(sliced_indices_x,sliced_indices_y)
+            sliced_arr = self.state[sliced_indices]
+        
+            no_i_indices = np.where(np.logical_and(sliced_arr[:,0,0] == x1,sliced_arr[:,0,1]==y1))
+            sliced_arr = np.delete(sliced_arr,no_i_indices,axis=0)
+            sliced_masses = self.masses[sliced_indices]
+            sliced_masses = np.delete(sliced_masses,no_i_indices,axis=0)
+        
+            distances2 = np.array(np.transpose(np.matrix((sliced_arr[:,0,0]-x1)**2+(sliced_arr[:,0,1]-y1)**2)))
+            jforce = np.array(np.transpose(np.matrix(sliced_masses)))/distances2
+            jforcedir = np.array(np.transpose(np.matrix([sliced_arr[:,0,0]-x1,sliced_arr[:,0,1]-y1])))/np.sqrt(distances2)
+            forces = jforce*jforcedir
+        
+            """
+            Collision calculations
+        
+            if i has not been noted as having collided:
+            
+            
+        
+            if i not in self.collided_particles:
+                #print(i)
+                self.collision_dict[i] = [(x1,y1),0]
+                x_collision_min = x1-collision_radius
+                x_collision_max = x1+collision_radius
+                y_collision_min = y1-collision_radius
+                y_collision_max = y1+collision_radius
+        
+                collision_indices_x = np.where(np.logical_and(self.state[:,0,0]>x_collision_min,
+                                                              self.state[:,0,0]<x_collision_max))
+                #print(collision_indices_x)
+                collision_indices_y = np.where(np.logical_and(self.state[:,0,1]>y_collision_min,
+                                                              self.state[:,0,1]<y_collision_max))
+                #print(collision_indices_y)
+                collision_indices = np.intersect1d(collision_indices_x, collision_indices_y)
+                #print(collision_indices)
+                if i in self.collided_particles:
+                    collision_indices = np.delete(collision_indices,np.where(collision_indices==i))
+                #print(collision_indices)
+                collision_arr = self.state[collision_indices]
+        
+                new_particles = np.setdiff1d(collision_indices,self.collided_particles)
+                self.collided_particles = np.append(self.collided_particles,new_particles)
+                self.collision_dict[i][1] = new_particles
+                #if len(new_particles)>0:
+                #   print(self.collision_dict)
+                #  print(self.collided_particles)
+
+        
+            """
+            """
+            Any way to get rid of these for loops and/or replace them with numpy?
+            """
+            for particle_num in sliced_indices:
+                if particle_num != i:
+                    collided2 = 0
+                    m2 = self.masses[particle_num]
+                    x2 = self.state[particle_num,0,0]
+                    y2 = self.state[particle_num,0,1]
+                    distance2 = ((x2-x1)**2+(y2-y1)**2)
+                    #if self.interaction == "ClassicalNBody":
+                            #jforce = m2/distance2
+                            #jforcedir = [x2-x1,y2-y1]/np.sqrt(distance2)
+                            #forces[particle_num] = jforce*jforcedir
                     """
                     if the collision dict is empty, put in the two particles being evaluated.
-                    
+                
                     if it's not empty, first search to see if the main particle is in there
-                        if the main particle is in there, move on to the secondary
+                    if the main particle is in there, move on to the secondary
                     if the secondary particle is not in there, put it in the entry with the main particle
-                    
                     """
+                
                     if self.collisions != False and i not in self.cleanup and particle_num not in self.cleanup:
                         if distance2 < collision_radius:
                             if self.collision_dict == {}:
@@ -344,40 +412,37 @@ class OrbitalSystem(object):
                                     i_val = keynum
                                 elif self.dict_check(self.collision_dict, particle_num) == -1:
                                     self.collision_dict[i_val][1].append(particle_num)
-					
-        return(np.sum(forces,axis=0))
+
+            return(np.sum(forces,axis=0))
+        
+        elif self.interaction == False:
+            xmin = x1-collision_radius
+            xmax = x1+collision_radius
+            ymin = y1-collision_radius
+            ymax = y1+collision_radius
+            sliced_indices_x = np.where(np.logical_and(self.state[:,0,0]>xmin,self.state[:,0,0]<xmax))
+            sliced_indices_y = np.where(np.logical_and(self.state[:,0,1]>ymin,self.state[:,0,1]<ymax))
+            sliced_indices = np.intersect1d(sliced_indices_x,sliced_indices_y)
+            sliced_arr = self.state[sliced_indices]
+        
+            no_i_indices = np.where(np.logical_and(sliced_arr[:,0,0] == x1,sliced_arr[:,0,1]==y1))
+            sliced_indices = np.delete(sliced_indices, no_i_indices)
+            
+            for particle_num in sliced_indices:
+                if self.collisions != False and i not in self.cleanup and particle_num not in self.cleanup:
+                        if self.collision_dict == {}:
+                            self.collision_dict[0] = [(x1,y1),[i,particle_num]]
+                        else:
+                            i_val = self.dict_check(self.collision_dict, i)
+                            keynum = max(self.collision_dict)+1
+                            if i_val == -1:
+                                self.collision_dict[keynum] = [(x1,y1),[i]]
+                                i_val = keynum
+                            elif self.dict_check(self.collision_dict, particle_num) == -1:
+                                self.collision_dict[i_val][1].append(particle_num)
+            return((0,0))
     
     
-    def combine_particles(self,particle1,particle2):
-        #get phase space of new particle
-        
-        #delete collided particles in state and mass
-        #add new particle in state and mass
-        
-        #nparticles -= 1 
-        
-        mass1 = self.masses[particle1]
-        mass2 = self.masses[particle2]
-        
-        xd1 = self.state[particle1,1,0]
-        yd1 = self.state[particle1,1,1]
-        
-        xd2 = self.state[particle2,1,0]
-        yd2 = self.state[particle2,1,1]
-        
-        totalmass = mass1+mass2
-                
-        newxd = ((mass1*xd1) + (mass2*xd2))/totalmass
-        newyd = ((mass1*yd1) + (mass2*yd2))/totalmass
-        
-        self.masses = np.delete(self.masses,[particle1,particle2],axis=0)
-        
-        new_phase_vector = [[self.state[particle1,0,0],self.state[particle1,0,1]],[newxd,newyd]]
-        self.masses = np.append(self.masses,np.array([totalmass]),axis=0)
-        
-        self.Nparticles = len(self.state)
-        
-        return(new_phase_vector)
     
     def trajplot(self,interval = "all",saveplot = False):
         framelist = fits.open(self.fname)
@@ -424,14 +489,20 @@ class OrbitalSystem(object):
         
 	#####  Plotting Tools  #####
     
-    def movie(self,type,function = "count"):
-        if type == 'position':
-            self.make_position()
+    def movie(self,type=None,function = "count"):
+        if self.skip_mkdir == False:
+            os.mkdir("{}/movies".format(self.dirname))
+            os.mkdir("{}/movies/spatial".format(self.dirname))
+            os.mkdir("{}/movies/spatial/frames".format(self.dirname))
+            os.mkdir("{}/movies/heatmap".format(self.dirname))
+            os.mkdir("{}/movies/heatmap/frames".format(self.dirname))
+        if type == 'spatial':
+            self.make_spatial()
         elif type == 'heatmap':
             self.make_heatmap(function)
         elif type == None:
-            self.make_heatmap()
-            self.make_position()
+            self.make_heatmap(function)
+            self.make_spatial()
     
     def make_heatmap(self,function):
         print("\n")
@@ -440,10 +511,6 @@ class OrbitalSystem(object):
         n=1
         for fname in self.fname_list:
             wholedata = fits.open(fname)
-            if self.skip_mkdir == False:
-                    os.mkdir("{}/movies").format(self.dirname)
-                    os.mkdir("{}/movies/heatmap".format(self.dirname))
-                    os.mkdir("{}/movies/heatmap/frames".format(self.dirname))
             for i in xrange(1,len(wholedata)):
             	data = wholedata[i].data
                 bins = scipy.stats.binned_statistic_2d(data['X'],
@@ -469,7 +536,7 @@ class OrbitalSystem(object):
                 plt.axes().set_aspect('equal')
                 plt.title('Nparticles: {}'.format(len(data['X'])))
                 cb = plt.colorbar()
-                plt.clim(0,15)
+                plt.clim(0,50)
                 cb.set_label('Number density')
                 plt.scatter(24,24,marker="x", color="white")
                 fname = "{}/movies/heatmap/frames/{}.png".format(self.dirname,n)
@@ -481,17 +548,15 @@ class OrbitalSystem(object):
             wholedata.close()
         os.system("ffmpeg -framerate 300 -i {}/movies/heatmap/frames/%d.png -c:v libx264 -r 30 -pix_fmt yuv420p {}/movies/heatmap/out.mp4".format(self.dirname,self.dirname))
 
-    def make_position(self):
+    def make_spatial(self):
         print("\n")
         print("Creating position space movie...")
         plt.figure()
         n=1
         for fname in self.fname_list:
-            data = fits.open(fname)[1].data
-            if self.skip_mkdir == False:
-                os.mkdir("{}/movies/position_space".format(self.dirname))
-                os.mkdir("{}/movies/position_space/frames".format(self.dirname))
-            for i in xrange(1,len(data)):
+            wholedata = fits.open(fname)
+            for i in xrange(1,len(wholedata)):
+                data = wholedata[i].data
                 plt.scatter(data['X'],data['Y'],c=data['MASS'])
                 cb = plt.colorbar()
                 plt.clim(0,50)
@@ -507,15 +572,15 @@ class OrbitalSystem(object):
                 plt.ylim(-30,30)
                 plt.axes().set_aspect('equal')
                 plt.title('Nparticles: {}'.format(len(data['X'])))
-                fname = "{}/position_space/frames/{}.png".format(self.dirname,n)
+                fname = "{}/movies/spatial/frames/{}.png".format(self.dirname,n)
                 plt.savefig(fname)
                 plt.clf()
                 sys.stdout.write('\rFrame {} completed'.format(n))
                 sys.stdout.flush()
                 n+=1
-            data.close()
+            wholedata.close()
         print('\n')
-        os.system("ffmpeg -framerate 300 -i {}/movies/position_space/frames/%d.png -c:v libx264 -r 30 -pix_fmt yuv420p {}/movies/position_space/out.mp4".format(self.dirname,self.dirname))
+        os.system("ffmpeg -framerate 300 -i {}/movies/spatial/frames/%d.png -c:v libx264 -r 30 -pix_fmt yuv420p {}/movies/spatial/out.mp4".format(self.dirname,self.dirname))
 
     def plot_n(self):
         ns = np.ndarray(len(self.nsteps))

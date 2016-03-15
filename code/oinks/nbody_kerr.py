@@ -77,13 +77,16 @@ class OrbitalSystem(object):
     
     def SingleParticleDerivativeVector(self,kstate,particle,t):
         
+        """
         if self.interaction == False:
             rad = farts.xy2rad(self.state[particle],(0,0))
+        
         else:
-            rad = farts.xy2rad(kstate[particle],
+        """
+        rad = farts.xy2rad(kstate[particle],
                                self.SingleParticleNewtonianForce(particle,
                                                                  5,
-                                                                 0.001))
+                                                                 0.1))
         
         
         r = rad[0,0]   
@@ -178,39 +181,43 @@ class OrbitalSystem(object):
                 up the state vector accordingly
                 """
                 
-            elif self.collisions == "elastic":
-                if self.collision_dict != {}:
-                    checked_particles = []
-                    for key in self.collision_dict:
-                        particles = self.collision_dict[key][1]
-                        for i in particles:
-                            if i not in checked_particles:
-                                checked_particles.append(i)
-                                distances = {}
-                                for j in particles:
-                                    if j != i and j not in checked_particles:
-                                        checked_particles.append(j)
-                                        distances[j] = np.sqrt((self.state[i][0][0]-self.state[j][0][0])**2+(self.state[i][0][1]+self.state[j][0][1])**2) # adds an entry in the distances dictionary with the particle number as the key and the value as the distance to the particle being evaluated
-                                    k = min(distances, key = distances.get) # get the particle number of the closest particle
-                                    particle1 = self.state[i]
-                                    m1 = masses[particle1]
-                                    x1 = particle1[0][0]
-                                    x1d = particle1[1][1]
-                                    y1 = particle1[0][1]
-                                    y1d = particle1[1][1]
-                                    particle2 = self.state[k]
-                                    m2 = masses[particle1]
-                                    x2 = particle2[0][0]
-                                    x2d = particle2[1][1]
-                                    y2 = particle2[0][1]
-                                    y2d = particle2[1][1]
-                                    newp1d = [(x1d*(m1-m2) + 2*m2*x2d)/(m1+m2),(y1d*(m1-m2) + 2*m2*y2d)/(m1+m2)]
-                                    newp2d = [(x2d*(m1-m2) + 2*m2*x1d)/(m1+m2),(y2d*(m1-m2) + 2*m2*y1d)/(m1+m2)]
-                                    newp1 = [[x1,y1],newp1d]
-                                    newp2 = [[x2,y2],newp2d]
-                                    new_state[i] = newp1
-                                    new_state[k] = newp2
-                self.collision_dict = {}
+        elif self.collisions == "elastic":
+            if self.collision_dict != {}:
+                checked_particles = []
+                for key in self.collision_dict:
+                    particles = self.collision_dict[key][1]
+                    for i in particles:
+                        if i not in checked_particles:
+                            checked_particles.append(i)
+                            distances = {}
+                            for j in particles:
+                                if j != i and j not in checked_particles:
+                                    checked_particles.append(j)
+                                    distances[j] = np.sqrt((self.state[i][0][0]-self.state[j][0][0])**2+(self.state[i][0][1]+self.state[j][0][1])**2) # adds an entry in the distances dictionary with the particle number as the key and the value as the distance to the particle being evaluated
+                            if distances != {}:
+                                k = min(distances, key = distances.get) # get the particle number of the closest particle
+                                particle1 = self.state[i]
+                                m1 = self.masses[i]
+                                x1 = particle1[0][0]
+                                x1d = particle1[1][1]
+                                y1 = particle1[0][1]
+                                y1d = particle1[1][1]
+                                particle2 = self.state[k]
+                                m2 = self.masses[k]
+                                x2 = particle2[0][0]
+                                x2d = particle2[1][1]
+                                y2 = particle2[0][1]
+                                y2d = particle2[1][1]
+                                print('\n','old:',x2d,y2d)
+                                newp1d = [(x1d*(m1-m2) + 2*m2*x2d)/(m1+m2),(y1d*(m1-m2) + 2*m2*y2d)/(m1+m2)]
+                                newp2d = [(x2d*(m2-m1) + 2*m1*x1d)/(m1+m2),(y2d*(m2-m1) + 2*m1*y1d)/(m1+m2)]
+                                print('\n','new:',newp2d)
+                                newp1 = [[x1,y1],newp1d]
+                                newp2 = [[x2,y2],newp2d]
+                                new_state[i] = newp1
+                                new_state[k] = newp2
+                                print('***Collision Detected***')
+            self.collision_dict = {}
         
         new_state = new_state[new_state[:,0,0].argsort()] # arsort() returns the indices that sort the array.  Here, I'm sorting by x position     
         return(new_state)
@@ -311,8 +318,7 @@ class OrbitalSystem(object):
         self.Nparticles = len(self.state)
     
     
-    def SingleParticleNewtonianForce(self, i, soi_radius, collision_radius):
-        
+    def SingleParticleNewtonianForce(self, i, soi_radius, collision_radius):        
         forces = np.zeros([self.Nparticles,2])
         
         x1 = self.state[i,0,0]
@@ -405,16 +411,16 @@ class OrbitalSystem(object):
                             if self.collision_dict == {}:
                                 self.collision_dict[0] = [(x1,y1),[i,particle_num]]
                             else:
-                                i_val = self.dict_check(self.collision_dict, i)
+                                i_val = farts.dict_check(self.collision_dict, i)
                                 keynum = max(self.collision_dict)+1
                                 if i_val == -1:
                                     self.collision_dict[keynum] = [(x1,y1),[i]]
                                     i_val = keynum
-                                elif self.dict_check(self.collision_dict, particle_num) == -1:
+                                elif farts.dict_check(self.collision_dict, particle_num) == -1:
                                     self.collision_dict[i_val][1].append(particle_num)
 
             return(np.sum(forces,axis=0))
-        
+
         elif self.interaction == False:
             xmin = x1-collision_radius
             xmax = x1+collision_radius
@@ -424,22 +430,25 @@ class OrbitalSystem(object):
             sliced_indices_y = np.where(np.logical_and(self.state[:,0,1]>ymin,self.state[:,0,1]<ymax))
             sliced_indices = np.intersect1d(sliced_indices_x,sliced_indices_y)
             sliced_arr = self.state[sliced_indices]
+            #print(len(sliced_arr))
         
-            no_i_indices = np.where(np.logical_and(sliced_arr[:,0,0] == x1,sliced_arr[:,0,1]==y1))
+            no_i_indices = np.where(np.logical_and(sliced_arr[:,0,0] == x1,
+            									   sliced_arr[:,0,1] == y1))
+            									   
             sliced_indices = np.delete(sliced_indices, no_i_indices)
-            
             for particle_num in sliced_indices:
                 if self.collisions != False and i not in self.cleanup and particle_num not in self.cleanup:
                         if self.collision_dict == {}:
                             self.collision_dict[0] = [(x1,y1),[i,particle_num]]
                         else:
-                            i_val = self.dict_check(self.collision_dict, i)
+                            i_val = farts.dict_check(self.collision_dict, i)
                             keynum = max(self.collision_dict)+1
                             if i_val == -1:
                                 self.collision_dict[keynum] = [(x1,y1),[i]]
                                 i_val = keynum
-                            elif self.dict_check(self.collision_dict, particle_num) == -1:
+                            elif farts.dict_check(self.collision_dict, particle_num) == -1:
                                 self.collision_dict[i_val][1].append(particle_num)
+                            
             return((0,0))
     
     
@@ -474,13 +483,7 @@ class OrbitalSystem(object):
         fig.gca().add_artist(circle1)
         plt.show()
     
-    def dict_check(self, some_dict, thing):
-        what_key= -1
-        for key in some_dict:
-            if thing in some_dict[key][1]:
-                what_key = key
-        return what_key
-    
+
     def get_event_horizon(self,t):
         return(self.M + np.sqrt(self.M**2 - self.a(t)**2))
         

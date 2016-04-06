@@ -27,6 +27,7 @@ class OrbitalSystem(object):
                  collisions = 'elastic',
                  masses = None,
                  init_state = None,
+                 cr = 0.001,
                  save_dir = "./output"):
         
         self.start_particles = Nparticles
@@ -35,6 +36,7 @@ class OrbitalSystem(object):
         self.M = M
         self.dt = dt
         self.a = a
+        self.cr = cr
         self.event_horizon = 0
         self.cleanup = []
         if init_state is not None:
@@ -83,9 +85,11 @@ class OrbitalSystem(object):
     def SingleParticleDerivativeVector(self, kstate, particle, t):
         if self.interaction == False:
             rad = farts.xy2rad(self.state[particle],(0,0))
-        else:
+        elif self.interaction == 'ClassicalNBody':
         	rad = farts.xy2rad(kstate[particle],
-                	           self.SingleParticleNewtonianForce(particle, 100, 0.0001))
+                	           self.SingleParticleNewtonianForce(particle, 100, self.cr))
+        elif self.interation == True:
+        	raise ValueError('Ambiguous interaction specification')
         r = rad[0,0]
         phi = rad[0,1]
         if(r > 999 or r < self.event_horizon+0.2):
@@ -111,7 +115,7 @@ class OrbitalSystem(object):
         collided1 = 0
         
         if self.interaction=='ClassicalNBody':
-            
+
             xmin = x1-soi_radius
             xmax = x1+soi_radius
             ymin = y1-soi_radius
@@ -334,7 +338,7 @@ class OrbitalSystem(object):
     def get_header(self,nsteps,comments=""):
         prihdr = fits.Header()
         prihdr["NPARTS"] = self.Nparticles
-        prihdr["INTERACT"] = self.interaction
+        prihdr["PARTGRAV"] = self.interaction
         prihdr["DT"] = self.dt
         prihdr["BHMASS"] = self.M
         if self.a:
@@ -343,6 +347,7 @@ class OrbitalSystem(object):
             prihdr["SPINFUNC"] = False
         prihdr["NSTEPS"] = nsteps
         prihdr["COMMENTS"] = comments
+        prihdr["COLRAD"] = self.cr
         prihdu = fits.PrimaryHDU(header=prihdr)
     
         return(prihdu)

@@ -2,6 +2,8 @@
 Orbit Integrator for N-body Kerr Solutions (OINKS)
 "It's a real resource hog!"
 
+This version is for 3d disk simulation
+
 Author: Alex Deich
 Date: February, 2016
 """
@@ -12,7 +14,7 @@ import time
 import matplotlib.pyplot as plt
 import sys
 import os
-import ThesisTools as farts
+import ThesisTools_3d as farts
 import scipy.stats
 from astropy.io import fits
 from scipy.spatial.distance import pdist,squareform
@@ -64,11 +66,11 @@ class OrbitalSystem(object):
             self.a = farts.a0
         
         if init_state is not None:
-            if init_state.shape == (Nparticles,2,2):
+            if init_state.shape == (Nparticles,2,3):
                 self.init_state = init_state
             else:
                 raise ValueError("Initial state not the right shape: ",init_state.shape,
-                	             "\nShould be ",(Nparticles,2,2))
+                	             "\nShould be ",(Nparticles,2,3))
     
         if masses == None:
             self.masses = np.zeros(Nparticles)+0.0001
@@ -83,34 +85,39 @@ class OrbitalSystem(object):
         
         
     def SingleParticleDerivativeVector(self, kstate, particle, t):
-        #print("\n\n\nInput XY state: ", self.state)
+        #print("\n\n\nInput XYZ state: ", self.state)
         if self.interaction == False:
-            rad = farts.xy2rad(kstate[particle],(0,0))
+            rad = farts.xy2rad(kstate[particle])
         elif self.interaction == 'ClassicalNBody':
         	rad = farts.xy2rad(kstate[particle],
                 	           self.SingleParticleNewtonianForce(particle, 100, self.cr))
         elif self.interation == True:
         	raise ValueError('Ambiguous interaction specification')
-
         r = rad[0,0]
-        phi = rad[0,1]
-        if(r > 999 or r < self.event_horizon-0.2):
+        theta = rad[0,1]
+        phi = rad[0,2]
+        if(r > 999 or r < self.event_horizon+0.2):
             if particle not in self.cleanup:
                 self.cleanup.append(particle)
         f = np.array(([rad[0,0],rad[1,0]],
-                      [rad[0,1],rad[1,1]]))
-       
-        #print("\nInput RP state: ", f)
+                      [rad[0,1],rad[1,1]],
+                      [rad[0,2],rad[1,2]]))
+        #print("\nInput RTP state: ", f)
+        rdd = (-4*pow(self.M,3) + f[0,0]*(4*pow(self.M,2) + f[0,0]*(-self.M + self.M*pow(f[0,1],2) + f[0,0]*pow(-2*self.M + f[0,0],2)*(pow(f[1,1],2) + pow(f[2,1],2)*pow(np.sin(f[1,0]),2)))))/(pow(f[0,0],3)*(-2*self.M + f[0,0]))
+                
+        Tdd = (-2*f[0,1]*f[1,1])/f[0,0] + np.cos(f[1,0])*pow(f[2,1],2)*np.sin(f[1,0])
+        
+        Pdd = (-2*(f[0,1] + (np.cos(f[1,0])/np.sin(f[1,0]))*f[0,0]*f[1,1])*f[2,1])/f[0,0]
+        
         # The Kerr metric
-        G=np.array([[f[0,1],
-                    (-(self.M*pow(pow(self.a(t),2) - 2*self.M*f[0,0] + pow(f[0,0],2),2)) + self.a(t)*self.M*pow(pow(self.a(t),2) - 2*self.M*f[0,0] + pow(f[0,0],2),2)*f[1,1] + pow(pow(self.a(t),2) - 2*self.M*f[0,0] + pow(f[0,0],2),2)*f[1,1]*(self.a(t)*self.M + (-(pow(self.a(t),2)*self.M) + pow(f[0,0],3))*f[1,1]) + pow(f[0,0],3)*(-pow(self.a(t),2) + self.M*f[0,0])*pow(f[0,1],2))/(pow(f[0,0],4)*(pow(self.a(t),2) - 2*self.M*f[0,0] + pow(f[0,0],2)))],
-                   [f[1,1],
-                   (2*(-(self.a(t)*self.M) + (pow(self.a(t),2)*self.M + 2*self.M*pow(f[0,0],2) - pow(f[0,0],3))*f[1,1])*f[0,1])/(pow(f[0,0],2)*(pow(self.a(t),2) - 2*self.M*f[0,0] + pow(f[0,0],2)))]])
+        G = np.array([[f[0,1],rdd],
+                      [f[1,1],Tdd],
+                      [f[2,1],Pdd]])
         #print("\nRTP G: ",G)
-        #G = np.array([[f[0,1],rad[2,0]],
-        #              [f[1,1],rad[2,1]]])
-        xyG = farts.G2xy(G,r,phi)
-        #print("\nXY G: ",xyG)
+        #print("G: \n", G)
+        xyG = farts.G2xy(G,r,theta,phi)
+        #print("\nXYZ G: ",xyG)
+        #print("\nxyG: \n",xyG)
         return(xyG)
     
     def SingleParticleNewtonianForce(self, i, soi_radius, collision_radius):        
@@ -118,10 +125,12 @@ class OrbitalSystem(object):
         
         x1 = self.state[i,0,0]
         y1 = self.state[i,0,1]
+        z1 = self.state[i,0,2]
         
         m1 = self.masses[i]
         collided1 = 0
-        
+        """
+        2D shit
         if self.interaction=='ClassicalNBody':
 
             xmin = x1-soi_radius
@@ -153,13 +162,13 @@ class OrbitalSystem(object):
                 	y2 = self.state[particle_num,0,1]
                 	distance2 = ((x2-x1)**2+(y2-y1)**2)
                 	
-                	"""
+                	""""""
                 	if the collision dict is empty, put in the two particles being evaluated.
                 
                 	if it's not empty, first search to see if the main particle is in there
                 	if the main particle is in there, move on to the secondary
                 	if the secondary particle is not in there, put it in the entry with the main particle
-                	"""
+                	""""""
                 	if self.Nparticles == 2:
                 	    if distance2>500000:
                 	        print('\n',distance2)
@@ -182,10 +191,10 @@ class OrbitalSystem(object):
                 	                self.collision_dict[i_val][1].append(particle_num)
 
             return(np.sum(forces,axis=0))
-    
+    		"""
     def UpdateStateVectorRK4(self,t):
         self.event_horizon = self.get_event_horizon(t)
-        new_state = np.ndarray((self.Nparticles,2,2))
+        new_state = np.ndarray((self.Nparticles,2,3))
         
         for particle in xrange(self.Nparticles):
 
@@ -266,25 +275,31 @@ class OrbitalSystem(object):
                 	
                 	x1 = new_state[i1,0,0]
                 	y1 = new_state[i1,0,1]
+                	z1 = new_state[i2,0,3]
                 	x2 = new_state[i2,0,0]
                 	y2 = new_state[i2,0,1]
+                	z2 = new_state[i2,0,2]
                 	
                 	x1d = new_state[i1,1,0]
                 	y1d = new_state[i1,1,1]
+                	z1d = new_state[i1,1,2]
                 	x2d = new_state[i2,1,0]
                 	y2d = new_state[i2,1,1]
+                	z2d = new_state[i2,1,2]
                 	
-                	new_state[i1, 1] = [(x1d*(m1-m2) + 2*m2*x2d)/(m1+m2),(y1d*(m1-m2) + 2*m2*y2d)/(m1+m2)]
-                	new_state[i2, 1] = [(x2d*(m2-m1) + 2*m1*x1d)/(m1+m2),(y2d*(m2-m1) + 2*m1*y1d)/(m1+m2)]
+                	new_state[i1, 1] = [(x1d*(m1-m2) + 2*m2*x2d)/(m1+m2),
+                	                    (y1d*(m1-m2) + 2*m2*y2d)/(m1+m2),
+                	                    (z1d*(m1-m2) + 2*m2*z2d)/(m1+m2)]
+                	new_state[i2, 1] = [(x2d*(m2-m1) + 2*m1*x1d)/(m1+m2),
+                	                    (y2d*(m2-m1) + 2*m1*y1d)/(m1+m2),
+                	                    (z2d*(m2-m1) + 2*m1*z1d)/(m1+m2)]
             self.old_collisions = new_collisions
         return(new_state)
     
     def TimeEvolve(self,nsteps,comments,write=True):
         self.cleanup = []
         self.nsteps = nsteps
-        print("new eom")
         t=0
-        
         ##Get init_state
         if self.use_state == None:
             self.cleanup = []
@@ -307,7 +322,7 @@ class OrbitalSystem(object):
         hdulist = fits.HDUList([primary,frame0])
         total_time = 0
         savenums = nsteps/1000
-            
+        print('\n\n')
         for step in xrange(1, nsteps):
             stepstart = time.time()
             self.state = self.UpdateStateVectorRK4(t)
@@ -343,7 +358,7 @@ class OrbitalSystem(object):
             hdulist.writeto(fname,clobber=True)
             print("Frames {} written at {}".format(step+1,fname))
             self.fname_list.append(fname)
-        print(self.state)          	    
+        print(self.state)
     def get_header(self,nsteps,comments=""):
         prihdr = fits.Header()
         prihdr["NPARTS"] = self.Nparticles
@@ -365,8 +380,10 @@ class OrbitalSystem(object):
         state_transpose = self.state.T
         frame = fits.BinTableHDU.from_columns([fits.Column(name='X',format='E',array = state_transpose[0][0]),
                 	                	        fits.Column(name='Y',format='E',array = state_transpose[1][0]),
+                	                	        fits.Column(name='Z',format='E',array = state_transpose[2][0]),
                 	                	        fits.Column(name='Xd',format='E',array = state_transpose[0][1]),
                 	                	        fits.Column(name='Yd',format='E',array = state_transpose[1][1]),
+                	                	        fits.Column(name='Zd',format='E',array = state_transpose[2][1]),
                 	                	        fits.Column(name='MASS',format='E',array = self.masses)])
         return(frame)
         
@@ -475,31 +492,7 @@ class OrbitalSystem(object):
             wholedata.close()
         print('\n')
         os.system("ffmpeg -framerate 300 -i {}/movies/spatial/frames/%d.png -c:v libx264 -r 30 -pix_fmt yuv420p {}/movies/spatial/out.mp4".format(self.dirname,self.dirname))
-	
-    def plottraj(self):
-    	print("Plotting trajectory...")
-    	n = 0
-        trajectory = np.ndarray((self.nsteps,2))
-        for fname in self.fname_list:
-            wholedata = fits.open(fname)
-            for i in xrange(1,len(wholedata)):
-                data = wholedata[i].data
-                trajectory[n,0] = data['X']
-                trajectory[n,1] = data['Y']
-                n += 1
-        plt.figure()
-        plt.scatter(trajectory[:,0],trajectory[:,1])
-        plt.scatter(0,0,marker='x',color='black')
-        circle1 = plt.Circle((0,0), radius = 2, color = 'r', fill = False)
-        fig = plt.gcf()
-        fig.gca().add_artist(circle1)
-        fig.gca().axes.get_xaxis().set_visible(False)
-        fig.gca().axes.get_yaxis().set_visible(False)
-        plt.xlim(-10,10)
-        plt.ylim(-10,10)
-        plt.axes().set_aspect('equal')
-        plt.show()
-				
+
     def plot_n(self):
         ns = np.ndarray(len(self.nsteps))
         i=0
@@ -536,3 +529,50 @@ class OrbitalSystem(object):
     	plt.xlabel(r'Timestep')
     	plt.ylabel(r'$<\dot{r}>$',fontsize=16)
     	plt.show()
+    	
+    def plottraj(self):
+    	print("Plotting 2D trajectory...")
+    	n = 0
+        trajectory = np.ndarray((self.nsteps,3))
+        for fname in self.fname_list:
+            wholedata = fits.open(fname)
+            for i in xrange(1,len(wholedata)):
+                data = wholedata[i].data
+                trajectory[n,0] = data['X']
+                trajectory[n,1] = data['Y']
+                trajectory[n,2] = data['Z']
+                n += 1
+        #fig = 
+        plt.figure()
+        #ax = fig.add_subplot(111,projection='3d')
+        plt.scatter(trajectory[:,0],trajectory[:,1])#,trajectory[:,2])
+        plt.scatter(0,0,marker='x',color='black')
+        circle1 = plt.Circle((0,0), radius = 2, color = 'r', fill = False)
+        fig = plt.gcf()
+        fig.gca().add_artist(circle1)
+        fig.gca().axes.get_xaxis().set_visible(False)
+        fig.gca().axes.get_yaxis().set_visible(False)
+        plt.xlim(-10,10)
+        plt.ylim(-10,10)
+        plt.axes().set_aspect('equal')
+        plt.show()
+    
+    def plottraj3d(self):
+        from mpl_toolkits.mplot3d import Axes3D
+        print("Plotting 3D trajectory...")
+        n = 0
+        trajectory = np.ndarray((self.nsteps,3))
+        for fname in self.fname_list:
+            wholedata = fits.open(fname)
+            for i in xrange(1,len(wholedata)):
+                data = wholedata[i].data
+                trajectory[n,0] = data['X']
+                trajectory[n,1] = data['Y']
+                trajectory[n,2] = data['Z']
+                n += 1
+        fig = plt.figure()
+        ax = fig.add_subplot(111,projection='3d')
+        plt.xlim(-8,8)
+        plt.ylim(-8,8)
+        plt.scatter(trajectory[:,0],trajectory[:,1],trajectory[:,2])
+        plt.show()
